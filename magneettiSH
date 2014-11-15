@@ -1,0 +1,157 @@
+#!/bin/sh -efu
+
+# V.Zavjalov, 2013-02-28
+# Run magneetti program using simple text input file
+
+# Data file example and description:
+if false; then file_example='
+### shields
+# * len, mm (0 for a disk)
+# * rad, mm (outer rad for disk)
+# * hole radius (only for disk, len=0)
+# * shield center, mm
+# * trapped flux, gauss/cm2
+# * add symmetric shield
+
+shield 0 20 0 100 0 0
+
+### coils
+# * coil length, mm
+# * inner radius, mm
+# * center of solenoid, mm
+# * number of leyers
+# * turns per layer
+# * current, A
+# * add symmetric coil
+
+coil 76  16     0 4 585 0.85 0
+coil 6.5 16 41.25 6  50 0.85 1
+coil 6.5 16 47.75 9  50 0.85 1
+
+### wire
+# * diameter, mm.
+# * foil thickness (putting wire onto the notch.
+#   between adjacent turns in the previous leyer.
+#   give "foil" = -0.134 times wire diameter).
+
+wire 0.12 -0.01608
+
+### calculation region
+##    r1 dr r2  z1  dz z2
+field  0  1 13 -105 1 105
+'; fi
+
+if [ "$#" != 1 ]; then
+  echo "usage: $0 <file>"
+  exit 1
+fi
+
+file=$1
+base="${file%%.*}"
+
+[ ! -f "$base.fld" ] || mv -f -- $base.fld $base.fld.bak
+[ ! -f "$base.dsc" ] || mv -f -- $base.dsc $base.dsc.bak
+[ ! -f "$base.cmd" ] || mv -f -- $base.cmd $base.cmd.bak
+
+shields="$(grep "^shield " "$file")" ||:
+coils="$(grep "^coil " "$file")" ||:
+wire="$(grep "^wire " "$file")" ||:
+field="$(grep "^field " "$file")" ||:
+
+nshields="$(echo $shields | wc -l)"
+ncoils="$(echo $coils | wc -l)"
+
+if [ "$(echo $wire | wc -l)" -lt 1 ]; then
+  echo "Error: no wire settings!" > /dev/stderr
+  exit 1
+fi
+if [ "$(echo $field | wc -l)" -lt 1 ]; then
+  echo "Error: no field setting!" > /dev/stderr
+  exit 1
+fi
+
+
+{
+  echo "$ncoils"
+  echo "$nshields"
+  echo "y"; # change shield
+
+  ### shields
+  echo "$shields" |
+  while read cmd len rad hrad center flux sym; do
+    [ "$cmd" = shield ] || continue
+    if [ -z "$sym" ]; then
+      echo "Error: bad shield setting" > /dev/stderr
+      exit 1
+    fi
+
+    echo "y";      # more shield parts
+    echo "$len"    # len, mm (0 for a disk)
+    echo "$rad"    # rad, mm (outer rad for disk)
+    [ "$len" != 0 ] || echo "$hrad" # hole radius (only for disk, len=0)
+    echo "$center" # shield center, mm
+    echo "$flux"   # trapped flux, gauss/cm2
+    if [ "$center" != 0 ]; then
+      [ "$sym" = 0 ] && echo 'n' || echo 'y'  # add symmetric shield
+    fi
+  done || exit 1
+  echo 'n'; # no more shields
+
+  ### coils
+  echo "$coils" |
+  while read cmd len rad center layers turns current sym; do
+    [ "$cmd" = coil ] || continue
+    if [ -z "$sym" ]; then
+      echo "Error: bad coil setting" > /dev/stderr
+      exit 1
+    fi
+
+    echo "$len"     # coil length, mm
+    echo "$rad"     # inner radius, mm
+    echo "$center"  # center of solenoid, mm
+    echo "$layers"  # number of leyers
+    echo "$turns"   # turns per layer
+    echo "$current" # current, A
+    if [ "$center" != 0 ]; then
+      [ "$sym" = 0 ] && echo 'n' || echo 'y'  # add symmetric coil
+    fi
+  done || exit 1
+  echo "0" # no more coils
+
+  ### wire
+  echo "$wire" | {
+    read cmd diam foil
+    if [ "$cmd" != wire -o -z "$foil" ]; then
+      echo "Error: bad wire setting" > /dev/stderr
+      exit 1
+    fi
+    echo "$diam" # diameter, mm
+    echo "$foil" # foil thickness (putting wire onto the notch
+                 #  between adjacent turns in the previous leyer
+                 #  give "foil" = -0.134 times wire diameter)
+  } || exit 1
+
+  ### field
+  echo "0"           # external field in Gauss
+  echo "$base"       # basename for results
+  echo "F"           # F/X/C field, flux, current profile
+
+  echo "$field" | {
+    read cmd r1 dr r2 z1 dz z2
+    if [ "$cmd" != field -o -z "$z2" ]; then
+      echo "Error: bad field setting" > /dev/stderr
+      exit 1
+    fi
+    echo "$r1"
+    echo "$dr"
+    echo "$r2"
+    echo "$z1"
+    echo "$dz"
+    echo "$z2"
+  } || exit 1
+  echo "n" # continue same parameters
+  echo "n" # continue
+} > $base.cmd
+
+#magneetti &>/dev/null < $base.cmd
+magneetti  < $base.cmd

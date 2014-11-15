@@ -1,0 +1,317 @@
+#!/usr/bin/wish
+
+# magneettiUI - user interface for magneetti
+# Copyright (C) 1999 Jaakko Ruohio <jaakko.ruohio@hut.fi>
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# started 1999-05-03
+# saving and loading, and all that 1999-05-04
+# field profile is saved as well 1999-05-05
+# fix saving of radius of shield, better docs for shield 1999-07-09
+
+proc makeentry { w text variable } {
+    frame $w
+    label $w.label -text $text -width 24
+    entry $w.entry -width 9 -textvariable $variable
+    pack $w.label -side left
+    pack $w.entry -side right
+}
+
+proc files { w } {
+    global basename
+    global settings
+
+    frame $w.files
+    makeentry $w.files.basename "Basename for results" basename
+    makeentry $w.files.settings "Filename for settings" settings
+    label $w.files.note1 -text "There are output files for ~.fld and ~.dsc"
+    label $w.files.note2 -text "Settings file will be overwritten every \n \
+	    time field is calculated"
+    pack $w.files.basename $w.files.note1 $w.files.settings $w.files.note2
+}
+
+proc shield { w shinum } {
+    frame $w
+    makeentry $w.lenshi$shinum "Length¹ (mm)" lenshi($shinum)
+    makeentry $w.radshi$shinum "Radius³ (mm)" radshi($shinum)
+    makeentry $w.rhole$shinum "Radius of hole² (mm)" rhole($shinum)
+    makeentry $w.censhi$shinum "Center of shield (mm)" censhi($shinum)
+    makeentry $w.traflx$shinum "Trapped flux (gauss/cm²)" traflx($shinum)
+    checkbutton $w.symshi$shinum -text "Add symmetrical shield" \
+            -variable symshi($shinum)
+    label $w.note -text "¹If shield is a disk give 0 for length. \n \
+	    ²If not, radius of hole has no meaning. \n \
+	    ³If the part is a disk, give its outer radius"
+    pack $w.lenshi$shinum $w.radshi$shinum $w.rhole$shinum \
+            $w.censhi$shinum $w.traflx$shinum $w.symshi$shinum $w.note
+}
+
+proc newshield {}  {
+    global numshi
+    incr numshi
+    .t insert end "Shield $numshi"
+    shield .t.shi$numshi $numshi
+    .t tab configure "Shield $numshi" -window ".t.shi$numshi" \
+	    -fill both
+}
+
+proc passshield { shinum } {
+    global lenshi
+    global radshi
+    global rhole
+    global censhi
+    global traflx
+    global symshi
+
+    global fileID
+
+    puts $fileID "$lenshi($shinum) lenshi($shinum)"
+    puts $fileID "$radshi($shinum) radshi($shinum)"
+    if {$lenshi($shinum) == 0} {
+	puts $fileID "$rhole($shinum) rhole($shinum)"
+    }
+    puts $fileID "$censhi($shinum) censhi($shinum)"
+    puts $fileID "$traflx($shinum) traflx($shinum)"
+    if {$censhi($shinum) != 0} {
+        if {$symshi($shinum) == 1} {
+            puts $fileID "y symshi($shinum)"
+        } else {
+            puts $fileID "n symshi($shinum)"
+        }
+    }
+}
+
+proc coil { w solnum } {
+    frame $w
+    makeentry $w.lensol$solnum "Length (mm)" lensol($solnum)
+    makeentry $w.radsol$solnum "Inner radius (mm)" radsol($solnum)
+    makeentry $w.censol$solnum "Center of solenoid (mm)" censol($solnum)
+    makeentry $w.layers$solnum "Number of layers" layers($solnum)
+    makeentry $w.loops$solnum "Number of turns per layer" loops($solnum)
+    makeentry $w.cur$solnum "Current (A)" cur($solnum)
+    checkbutton $w.symsol$solnum -text "Add symmetrical solenoid" \
+            -variable symsol($solnum)
+    label $w.note -text "Symmetrical solenoid has no meaning for \
+	    coil 1, \n and for coils centered at 0."
+    pack $w.lensol$solnum $w.radsol$solnum $w.censol$solnum \
+            $w.layers$solnum $w.loops$solnum $w.cur$solnum $w.symsol$solnum \
+	    $w.note
+}
+
+proc newcoil {}  {
+    global numcoils
+    incr numcoils
+    .t insert end "Coil $numcoils"
+    coil .t.coil$numcoils $numcoils
+    .t tab configure "Coil $numcoils" -window ".t.coil$numcoils" \
+	    -fill both
+}
+
+proc passcoil { solnum } {
+    global lensol
+    global radsol
+    global censol
+    global layers
+    global loops
+    global cur
+    global symsol
+
+    global fileID
+
+    puts $fileID "$lensol($solnum) lensol($solnum)"
+    puts $fileID "$radsol($solnum) radsol($solnum)"
+    puts $fileID "$censol($solnum) censol($solnum)"
+    puts $fileID "$layers($solnum) layers($solnum)"
+    puts $fileID "$loops($solnum) loops($solnum)"
+    puts $fileID "$cur($solnum) cur($solnum)"
+    if {$censol($solnum) != 0} {
+	if {$symsol($solnum) == 1} {
+	    puts $fileID "y symsol($solnum)"
+	} else {
+	    puts $fileID "n symsol($solnum)"
+	}
+    }
+}
+
+proc wire { w } {
+    frame $w.wire
+    makeentry $w.wire.wirdia "Diameter of the wire (mm)" wirdia
+    makeentry $w.wire.foilth "Thickness of the foil" foilth
+    label $w.wire.note -text "If there is no foil and you wind layers \n \
+	    directly on top of each other, putting the \n \
+	    wire onto the notch between adjacent turns \n \
+	    in the previous layer, give -0.134 times \n \
+	    the thickness of the wire."
+    pack $w.wire.wirdia $w.wire.foilth $w.wire.note
+    pack $w.wire
+}
+
+proc passwire { } {
+    global wirdia
+    global foilth
+
+    global fileID
+    
+    puts $fileID "$wirdia wirdia"
+    puts $fileID "$foilth foilth"
+}
+
+
+proc fprof { w } {
+    frame $w.fprof
+    makeentry $w.fprof.basename "Basename for results" basename
+    makeentry $w.fprof.minrad "Minimal radius (mm)" minrad
+    makeentry $w.fprof.diffrad "Difference (mm)" diffrad
+    makeentry $w.fprof.maxrad "Maximum radius (mm)" maxrad
+    makeentry $w.fprof.zbeg "Z beginning  (mm)" zbeg
+    makeentry $w.fprof.deltaz "Z difference (mm)" deltaz
+    makeentry $w.fprof.zend "Z end (mm)" zend
+
+    pack $w.fprof.minrad $w.fprof.diffrad $w.fprof.maxrad $w.fprof.zbeg \
+            $w.fprof.deltaz $w.fprof.zend
+    pack $w.fprof
+}
+
+proc passfield {  } {
+    global basename
+    global minrad
+    global diffrad
+    global maxrad
+    global zbeg
+    global deltaz
+    global zend
+
+    global fileID
+
+    puts $fileID "$basename basename"; # basename for results
+    puts $fileID "F"; # F/X/C field, flux, current profile
+
+    puts $fileID "$minrad minrad"
+    puts $fileID "$diffrad diffrad"
+    puts $fileID "$maxrad maxrad"
+    puts $fileID "$zbeg zbeg"
+    puts $fileID "$deltaz deltaz"
+    puts $fileID "$zend zend"
+}
+
+proc calc { } {
+    global basename
+    global numcoils
+    global numshi
+    global fileID
+    global settings
+
+    set fileID [open $settings w 0600]
+
+    catch {exec rm $basename.fld}
+    catch {exec rm $basename.dsc}
+
+    puts $fileID "$numcoils numcoils"
+    puts $fileID "$numshi numshi"
+
+    puts $fileID "y"; # change shield
+
+    for {set i 1} {$i <= $numshi} {incr i} {
+	puts $fileID "y"; # more shield parts
+        passshield $i
+    }
+    puts $fileID "n"; # no more shields
+
+
+    for {set i 1} {$i <= $numcoils} {incr i} {
+        passcoil $i
+    }
+    puts $fileID "0"; # no more coils
+
+    passwire
+    
+    puts $fileID "0"; # external field in Gauss
+    passfield
+    puts $fileID "n"; # continue same parameters
+    puts $fileID "n"; # continue
+    close $fileID
+    exec cut -f 1 -d " " $settings | magneetti
+}
+
+proc loadconf { } {
+    global numcoils
+    global numshi
+    global settings
+
+    set fileID [open $settings r]
+
+    # tabs for coils
+    gets $fileID line
+    set wantcoils [lindex $line 0]
+    for {set i $numcoils} {$i < $wantcoils} {incr i} newcoil
+
+    # tabs for shields
+    gets $fileID line
+    set wantshi [lindex $line 0]
+    for {set i $numshi} {$i < $wantshi} {incr i} newshield
+
+    while {[gets $fileID line] >= 0} {
+	set value [lindex $line 0]
+	if {$value == "n"} {set value 0}
+	if {$value == "y"} {set value 1}
+	set variable [lindex $line 1]
+	if {$variable != ""} {
+	    # because of arrays...
+	    set varname [string trimright $variable ()1234567890]
+	    global $varname
+	    set $variable $value
+	}
+    }
+
+    close $fileID
+}
+
+load /usr/lib/libBLT24.so
+
+if { $tcl_version >= 8.0 } {
+    namespace import blt::*
+}
+
+set numcoils 0
+set numshi 0
+
+tabset .t -relief raised -scrollcommand { .s set } -width 3i
+
+.t insert end Control Files Wire "Field profile"
+newcoil
+
+frame .t.control
+button .t.control.addshi -text "Add shield" -width 20 -command newshield
+button .t.control.addsole -text "Add solenoid" -width 20 -command newcoil
+button .t.control.calc -text "Calculate field" -width 20 -command calc
+button .t.control.load -text "Load configuration" -width 20 -command loadconf
+button .t.control.exit -text "Ok, had enough, exit!" -width 20 -command exit
+pack .t.control.addshi .t.control.addsole .t.control.calc \
+	.t.control.load .t.control.exit -pady 1
+
+.t tab configure "Control" -window ".t.control" -fill both
+
+files .t
+.t tab configure "Files" -window ".t.files"
+
+wire .t
+.t tab configure "Wire" -window ".t.wire"
+
+fprof .t
+.t tab configure "Field profile" -window ".t.fprof"
+
+scrollbar .s -command { .t view } -orient horizontal
+
+pack .t .s -fill x
+
+# This is the end, my friend!
+#############################
