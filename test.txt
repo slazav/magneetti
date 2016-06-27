@@ -1,0 +1,34 @@
+### shields
+# * len, mm (0 for a disk)
+# * rad, mm (outer rad for disk)
+# * hole radius (only for disk, len=0)
+# * shield center, mm
+# * trapped flux, gauss/cm2
+# * add symmetric shield
+
+# shield 0 20 0 100 0 0
+
+### coils
+# * coil length, mm
+# * inner radius, mm
+# * center of solenoid, mm
+# * number of leyers
+# * turns per layer
+# * current, A
+# * add symmetric coil
+
+coil 76  16     0 4 585 0.85 0
+# coil 6.5 16 41.25 6  50 0.85 1
+# coil 6.5 16 47.75 9  50 0.85 1
+
+### wire
+# * diameter, mm.
+# * foil thickness (putting wire onto the notch.
+#   between adjacent turns in the previous leyer.
+#   give "foil" = -0.134 times wire diameter).
+
+wire 0.12 -0.01608
+
+### calculation region
+##    r1 dr r2  z1  dz z2
+field  0  1 13 -105 1 105
