@@ -6,7 +6,7 @@
 #  -std=legacy
 
 
-FFLAGS= -Wconversion\
+FFLAGS= -g -Wconversion\
   -Wline-truncation\
   -Waliasing  -Wampersand -Warray-bounds -Wcharacter-truncation\
   -Wline-truncation -Wno-tabs -Wunderflow\
