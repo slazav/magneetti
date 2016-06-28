@@ -3,9 +3,16 @@ cocentric coils in a superconducting shield. The shield must consist
 of cocentric cylinders and circular disks. There can be a hole in the
 center of each disk.
 
-magnet      --  original program with Q-and-A interface -- Michael Boegl, EPV, Uni-Bayreuth, 1993
-magneettiUI --  tcl/tk interface                        -- Jaakko Ruohio <jaakko.ruohio@hut.fi>, 1999
-magneettiSH --  command interface (see test.txt file)   -- Vladislav Zavjalov, 2014
+magnet -- original program with Q-and-A interface
+                -- Michael Boegl, EPV, Uni-Bayreuth, 1993
+
+magneettiUI -- tcl/tk interface
+                -- Jaakko Ruohio <jaakko.ruohio@hut.fi>, 1999
+
+magneettiSH -- command interface (see test.txt file)
+                -- Vladislav Zavjalov, 2014
+
 magnet_new  --  new command interface similar to magneettiSH
-                (shild calcs do not work now)           -- Vladislav Zavjalov, 2016
+                Shild calcs do not work now!
+                -- Vladislav Zavjalov, 2016
 

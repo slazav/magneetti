@@ -6,8 +6,8 @@
 # * trapped flux, gauss/cm2
 # * add symmetric shield
 
- shield 0 20 0 100 0 0
- shield 0 20 0 -100 0 0
+shield 0 20 0  70 0 0
+shield 0 20 0 -70 0 0
 
 ### coils
 # * coil length, mm
@@ -19,8 +19,8 @@
 # * add symmetric coil
 
 coil 76  16     0 4 585 0.85 0
-coil 6.5 16 41.25 6  50 0.85 1
-coil 6.5 16 47.75 9  50 0.85 1
+coil 6.5 17  47.75 4  50 0.85 0
+coil 6.5 17 -47.75 4  50 0.85 0
 
 ### wire
 # * diameter, mm.
@@ -32,4 +32,4 @@ wire 0.12 -0.01608
 
 ### calculation region
 ##    r1 dr r2  z1  dz z2
-field  0  1 13 -105 1 105
+field  0  1 16 -105 1 105

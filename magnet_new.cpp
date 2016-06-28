@@ -1,52 +1,17 @@
-#include "magnet.h"
 #include <iostream>
 #include <sstream>
 #include <string>
 
+extern "C"{
+#include "magnet.h"
+}
+
 /* New command line interface for magneetti program.
+ * It implements uses the same interface as magneettiSH,
+ * But now shield calculations do not work.
  *
  *       slazav, 2016.
  */
-
-/*
-### shields
-# * len, mm (0 for a disk)
-# * rad, mm (outer rad for disk)
-# * hole radius (only for disk, len=0)
-# * shield center, mm
-# * trapped flux, gauss/cm2
-# * add symmetric shield
-
-shield 0 20 0 100 0 0
-
-### coils
-# * coil length, mm
-# * inner radius, mm
-# * center of solenoid, mm
-# * number of leyers
-# * turns per layer
-# * current, A
-# * add symmetric coil
-
-coil 76  16     0 4 585 0.85 0
-coil 6.5 16 41.25 6  50 0.85 1
-coil 6.5 16 47.75 9  50 0.85 1
-
-### wire
-# * diameter, mm.
-# * foil thickness (putting wire onto the notch.
-#   between adjacent turns in the previous leyer.
-#   give "foil" = -0.134 times wire diameter).
-
-wire 0.12 -0.01608
-
-### field calculation region [mm]
-##    r1 dr r2  z1  dz z2
-
-field  0  1 13 -105 1 105
-
-*/
-
 
 
 using namespace std;
@@ -54,11 +19,8 @@ int
 main(){
   magnet_data_t d;
 
-  int max = 30;
-  int nn = 100;
-
   // initialize data
-  magnet_data_init(max, nn, &d);
+  magnet_data_init(&d);
 
   int nc=0, ns=0; // coil and shield number
   double z1=0,z2=0,dz=0,r1=0,r2=0,dr=0;
@@ -76,8 +38,8 @@ main(){
     string cmd;
     sline >> cmd;
 
-    if (ns>=max) { cerr << "Shield limit reached: " << max << "\n"; break; }
-    if (nc>=max) { cerr << "Coil limit reached: " << max << "\n"; break; }
+    if (ns>=d.max) { cerr << "Shield limit reached: " << d.max << "\n"; break; }
+    if (nc>=d.max) { cerr << "Coil limit reached: " << d.max << "\n"; break; }
 
     if (cmd == "shield"){
       sline >> d.lenshi[ns] >> d.radshi[ns] >> d.rhole[ns]
@@ -86,7 +48,18 @@ main(){
       d.radshi[ns]/=1000;
       d.censhi[ns]/=1000;
       d.rhole[ns]/=1000;
+      d.traflx[ns]*=1e-8; // G*cm^2 -> Si
       d.difshi = 1;
+      if (d.symshi[ns]){
+        ns++;
+        if (ns>=d.max) { cerr << "Shield limit reached: " << d.max << "\n"; break; }
+        d.lenshi[ns]=d.lenshi[ns-1];
+        d.radshi[ns]=d.radshi[ns-1];
+        d.censhi[ns]=-d.censhi[ns-1];
+        d.rhole[ns]=d.rhole[ns-1];
+        d.traflx[ns]=d.traflx[ns-1];
+        d.symshi[ns]=1;
+      }
       ns++;
       continue;
     }
@@ -97,6 +70,17 @@ main(){
       d.lensol[nc]/=1000;
       d.radsol[nc]/=1000;
       d.censol[nc]/=1000;
+      if (d.symsol[nc]){
+        nc++;
+        if (nc>=d.max) { cerr << "Coil limit reached: " << d.max << "\n"; break; }
+        d.lensol[nc] = d.lensol[nc-1];
+        d.radsol[nc] = d.radsol[nc-1];
+        d.censol[nc] = -d.censol[nc-1];
+        d.layers[nc] = d.layers[nc-1];
+        d.loops[nc]  = d.loops[nc-1];
+        d.cur[nc] = d.cur[nc-1];
+        d.symsol[nc] = 1;
+      }
       nc++;
       continue;
     }
@@ -120,8 +104,8 @@ main(){
   }
 
   if (d.nshi>0)  curren(&d);
-  for (double z = z1; z<=z2; z+=dz){
-    for (double r = r1; r<=r2; r+=dr){
+  for (double r = r1; r<=r2; r+=dr){
+    for (double z = z1; z<=z2; z+=dz){
       double Bz, Br;
       field(z/1000, r/1000, &d, &Bz, &Br);
       // flux(z, r, &d, &magflu);

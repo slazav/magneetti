@@ -1,12 +1,16 @@
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 /* C definitions for magneetti program.
  *
  *       slazav, 2014-2016.
  */
+const int max = 30;
+const int nn =  150;
+const int nmem = nn*nn*2 + nn*4;
+const int nmem_lim = 2500;
 
-extern "C"{
 
 /**********************************************************/
 /* we are going to use these functions: */
@@ -81,7 +85,6 @@ extern void flux_( /* Calculates the vector potential in the point (r, z). */
    double *bext,    /* the external magnetic field */
    double *magflu   /* out: the magnetic flux through the ring of radius R located at z = Z */
 );
-extern void iwkin_(int *N); // allocate memory
 
 // data structure
 typedef struct {
@@ -98,7 +101,7 @@ typedef struct {
 
 // allocate memory and set it to zero
 void
-magnet_data_init(int max, int nn, magnet_data_t *d){
+magnet_data_init(magnet_data_t *d){
   d->nn  = nn;
   d->max = max;
   d->nshi = 0;
@@ -149,23 +152,21 @@ magnet_data_free(magnet_data_t *d){
   free(d->symsol);
 }
 
+
+extern void iwkin_(int *N); // allocate memory
+struct {double RWKSP[nmem];} worksp_;
+
 // wrappers for fortran functions
+
 void curren(magnet_data_t *d){
-  struct { double *RWKSP; } WORKSP;
-  int N = 2*d->nn*d->nn + 4*d->nn;
-
-  WORKSP.RWKSP = (double *)calloc(sizeof(double), N);
-  assert(WORKSP.RWKSP);
-
-  if (N>2500) iwkin_(&N);
-
+  int N = nmem;
+  if (nmem>nmem_lim) iwkin_(&N);
   curren_(
      &d->nn, &d->max, &d->nshi, &d->difshi,
      d->lenshi, d->radshi, d->censhi, d->rhole, d->symshi,
      d->lensol, d->radsol, d->censol, d->layers, d->loops, d->symsol,
      d->cur, &d->wirdia, &d->foilth, &d->bext, d->traflx,
      d->M, d->A, d->X);
-  free(WORKSP.RWKSP);
 }
 
 void field(double z, double r, magnet_data_t *d,
@@ -183,4 +184,3 @@ void flux(double z, double r, magnet_data_t *d, double *magflu){
      &d->wirdia, &d->foilth, d->cur, &d->bext, magflu);
 }
 
-}

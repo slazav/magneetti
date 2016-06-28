@@ -1,0 +1,139 @@
+\documentclass[a4paper]{article}
+
+\usepackage{amssymb}
+\usepackage{euscript}
+\usepackage{graphicx}
+\graphicspath{{pics/}}
+\usepackage{color}
+\usepackage{epsfig}
+\usepackage{fullpage}
+
+\newcommand{\image}[3]{
+\begin{figure}[#1]
+\begin{center}
+\input{pics/#2.tex}
+\caption{\small#3}
+\label{image:#2}
+\end{center}
+\end{figure}
+}
+
+\begin{document}
+\section {Solenoid optimizations}
+
+The field is calculated in radial coordinates,~$r$ and~$z$.
+We need to optimize three coil systems in the volume $V_0$: $r<r_0, |z|<z_0$:
+\begin{itemize}
+\item Homogeneous field - optimize compensation coils
+\item Gradient field - optimize gradient coils
+\item Minimum field - optimize minimum coil
+\end{itemize}
+For this we calculate mean square difference from the best
+constant, linear, or quadratic approximation.
+
+$$ R_0 = \sqrt{\frac{1}{V_0}\int_V(H(r,z) - H_0)^2\,dV}
+$$
+$$ R_1 = \sqrt{\frac{1}{V_0}\int_V(H(r,z) - z D - H_1)^2\,dV}
+$$
+$$ R_2 = \sqrt{\frac{1}{V_0}\int_V(H(r,z) - \Big(z^2-\frac12 r^2\Big) Q - H_2)^2\,dV}
+$$
+
+Note the $-1/2$ ratio of~$r$ and~$z$ quadratic terms - this comes from Maxwell equations
+for a cylindrically symmetric system.
+
+
+This can be rewritten as
+$$ R_0^2
+= I_2 - 2H_0 I_1 + H_0^2
+$$
+$$ R_1^2
+ = I_2 - 2H_1 I_1 + H_1^2 + D( D I_{D2} - 2I_{DH} + 2H_1 I_{D1})
+$$
+$$ R_2^2
+ = I_2 - 2H_2 I_1 + H_2^2 + Q( Q I_{Q2}  - 2I_{QH} + 2H_2 I_{Q1})
+$$
+
+
+
+where we introduced integrals
+$$
+I_1 = \frac{1}{V_0}\int_V H\, dV,\qquad
+I_2 = \frac{1}{V_0}\int_V H^2\, dV,\qquad
+$$
+$$
+I_{DH} = \frac{1}{V_0}\int_V z   H\, dV,\qquad
+I_{D1} = \frac{1}{V_0}\int_V z  \, dV,\qquad
+I_{D2} = \frac{1}{V_0}\int_V z^2\, dV,\qquad
+$$
+$$
+I_{QH} = \frac{1}{V_0}\int_V (z^2-r^2/2)H\, dV,\qquad
+I_{Q1} = \frac{1}{V_0}\int_V (z^2-r^2/2)\, dV,\qquad
+I_{Q2} = \frac{1}{V_0}\int_V (z^2-r^2/2)^2\, dV,\qquad
+$$
+
+Parameters $H_{0,1,2}$, $D$, $Q$ correspond the minima of~$R_0$, $R_1$, $R_2$:
+$$
+\frac{\partial R_0}{\partial H_0} = 0,\quad
+\frac{\partial R_1}{\partial D, H_1} = 0,\quad
+\frac{\partial R_2}{\partial Q, H_2} = 0,
+$$
+
+$$
+H_0 = I_1,\qquad
+H_1 = I_1 - D I_{D1},\qquad
+H_2 = I_1 - Q I_{Q1}
+$$
+$$
+D = (I_{DH} - I_{D1} I_1)/(I_{D2} - I_{D1}^2),\qquad
+Q = (I_{QH} - I_{Q1} I_1)/(I_{Q2} - I_{Q1}^2)
+$$
+
+For coil optimizations we use dimensionless parameters:
+$R_0/|H_0|$, $R_1/(z_0|D|)$, $R_2/(z_0^2|Q|)$ (we want to minimize ratio
+of the inaccuracy in gradient field and the gradient itself).
+
+Optimisation is donr in $z0=r0=10$ cylindrica volume.
+
+{\bf Fixed geometry.} We use main coil with length 104~mm, inner radius
+21~mm, and 10 layers of wire in the cylindrical shield with length 140~mm
+and radius 29~mm. Wire diameter is 0.084mm (in insulation).
+
+{\bf Compensation coils.} Minimum value in the optimisation is not so
+important as minimum width ($0.2$~mm error will break all the
+improvements). It's better to start compensation coils from edge of the
+main solenoid and make them thin (I use 2 layes) and long -- then the
+minimum is wider. Shorter coils have better field homogeneity, but it is
+harder to make accurate size. Second layer with different length does not
+help much. Compensation coils inside the solenoid is slightly better. I
+also hope that it is better to do correct sizes in this case. Adjasting
+the quadratic coil can improve the field homogeneity even more.
+
+{\bf Gradient coils} are better if they are wider. It is good to start them
+from the edge of the solenoid. Starting from the end of compensation coils
+is also fine (\%10 worse). Second layer can improve gradient coils $\approx 2$ times,
+
+{\bf Quadratic coil} just a coil in the center with a certain width.
+
+{\bf Optimization results:}
+
+\medskip
+\begin{tabular}{lllllll}
+Coils & Edge &Length       & Layers & Err 20x20*  & Err 10x10**              & Field [G/A] vs r,z [cm] \\\hline
+Main  & 52   & 104         & 10     & $6.4\cdot10^{-4}$ & $1.6\cdot10^{-4}$ & $664.267$\\                      
+Comp  & 52   & 13.6        & 2      & $1.0\cdot10^{-5}$ & $6.8\cdot10^{-7}$ & $665.839$\\                      
+Grad  & 52   & 34.3 + 44.6 & 2+2    & $3.4\cdot10^{-3}$ & $2.1\cdot10^{-4}$ & $91.8842\ z$\\                    
+Quad  & -    & 35.4        & 2      & $4.1\cdot10^{-3}$ & $3.5\cdot10^{-4}$ & $104.344 - 145.61 (z^2-r^2/2)$\\
+\end{tabular}
+\medskip
+
+\noindent
+*) in the volume of optimization, $z0=r0=10$~mm.\\
+**) in the inner volume, $z0=r0=5$~mm.
+
+
+
+
+\image{h}{fits}{Calculated field profiles aat $1$~A current}
+
+\end{document}
+

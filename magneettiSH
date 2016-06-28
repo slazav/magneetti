@@ -154,4 +154,4 @@ fi
 } > $base.cmd
 
 #magneetti &>/dev/null < $base.cmd
-magneetti  < $base.cmd
+#./magnet  < $base.cmd
