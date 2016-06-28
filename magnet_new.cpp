@@ -1,7 +1,10 @@
-#include "magnet.h"
 #include <iostream>
 #include <sstream>
 #include <string>
+
+extern "C"{
+#include "magnet.h"
+}
 
 /* New command line interface for magneetti program.
  *
@@ -55,7 +58,7 @@ main(){
   magnet_data_t d;
 
   int max = 30;
-  int nn = 100;
+  int nn =  34;
 
   // initialize data
   magnet_data_init(max, nn, &d);
@@ -86,7 +89,7 @@ main(){
       d.radshi[ns]/=1000;
       d.censhi[ns]/=1000;
       d.rhole[ns]/=1000;
-      d.difshi[ns] = 1;
+      d.difshi = 1;
       ns++;
       continue;
     }
@@ -113,6 +116,11 @@ main(){
     cerr << "Unknown command: " << cmd << "\n";
   }
   d.nshi = ns;
+
+  if (dz<=0 || z1>=z2 || dr<=0 || r1>=r2){
+    cerr << "Calculation range does not set\n";
+    return 1;
+  }
 
   if (d.nshi>0)  curren(&d);
   for (double z = z1; z<=z2; z+=dz){

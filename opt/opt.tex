@@ -1,0 +1,68 @@
+\documentclass[a4paper]{article}
+
+\usepackage{amssymb}
+\usepackage{euscript}
+\usepackage{graphicx}
+\graphicspath{{pics/}}
+\usepackage{color}
+\usepackage{epsfig}
+\usepackage{fullpage}
+
+\newcommand{\image}[3]{
+\begin{figure}[#1]
+\begin{center}
+\input{pics/#2.tex}
+\caption{\small#3}
+\label{image:#2}
+\end{center}
+\end{figure}
+}
+
+\begin{document}
+\section {Solenoid optimizations}
+
+The field is calculated in radial coordinates,~$r$ and~$z$.
+We need to optimize three coil systems in the region $r<r_0, |z|<z_0$:
+\begin{itemize}
+\item Homogeneous field
+\item Gradient field
+\item Minimum field
+\end{itemize}
+For this we calculate mean square difference from the best
+constant linear or quadratic approximation.
+
+$$ R_0 = \sqrt{\int(H(r,z) - H_0)^2\,\frac{dr\,dz}{4\pi r_0 z_0}}
+$$
+$$ R_1 = \sqrt{\int(H(r,z) - z D_1 - H_1)^2\,\frac{dr\,dz}{4\pi r_0 z_0}}
+$$
+$$ R_2 = \sqrt{\int(H(r,z) - z^2 Q_2 - H_2)^2\,\frac{dr\,dz}{4\pi r_0 z_0}}
+$$
+
+Parameters $H_{0,1,2}$, $D_1$, $Q_2$ correspond the minima of~$R_0$,
+$R_1$, $R_2$:
+$$
+\frac{d I_0}{dH_0} = 0,\quad
+\frac{d I_1}{dD_1, H_1} = 0,\quad
+\frac{d I_2}{dQ_2, H_2} = 0,
+$$
+
+
+$$
+H_0 = I_0, \quad
+H_1 = 4 I_0 - 6 I_1, \quad
+H_2 = \frac{3}{4}(3 I_0 - 5 I_2)
+$$
+$$
+D_1 = \frac{6}{z_0} (2 I_1 - I_0), \quad
+Q_2 = \frac{15}{4z_0^2} (3 I_2 - I_0)
+$$
+
+where
+$$
+I_n = \frac{1}{z_0^n} \int z^n H(r,z)\,\frac{dr\,dz}{4\pi r_0 z_0}
+$$
+
+
+\end{document}
+
+

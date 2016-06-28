@@ -6,7 +6,7 @@
 #  -std=legacy
 
 
-FFLAGS= -Wconversion\
+FFLAGS= -g -Wconversion\
   -Wline-truncation\
   -Waliasing  -Wampersand -Warray-bounds -Wcharacter-truncation\
   -Wline-truncation -Wno-tabs -Wunderflow\
@@ -19,8 +19,10 @@ all: magnet magnet_new libmagneetti.so
 magnet: magnet.f magnet_lib.f magnnum.f
 	g77 -O9 -o magnet $+
 
-magnet_new: magnet_new.cpp magnet_lib.o magnnum.o
+magnet_new.o: magnet.h magnet_new.cpp
+magnet_new: magnet_new.o magnet_lib.o magnnum.o
 	g++ -O9 -o magnet_new $+ -lgfortran
+
 
 libmagneetti.so: magnet_lib.f magnnum.f
 	$(FC) $(LDFLAGS) --shared -fPIC -o $@ $+  $(LDLIBS)

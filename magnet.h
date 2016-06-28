@@ -1,12 +1,11 @@
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 /* C definitions for magneetti program.
  *
  *       slazav, 2014-2016.
  */
-
-extern "C"{
 
 /**********************************************************/
 /* we are going to use these functions: */
@@ -15,7 +14,7 @@ extern void curren_( /* Calculates the current distribution in the shield. */
    int    *nn,      /* dimension of the vector CURSHI */
    int    *max,     /* the maximum number of solenoids and shield parts */
    int    *nshi,    /* the number of shield parts */
-   int    *difshi,  /* [max] .TRUE.  if the shield dimensions have been changed */
+   int    *difshi,  /* .TRUE.  if the shield dimensions have been changed */
    double *lenshi,  /* [max] the length of the shield part (0 for a disk) */
    double *radshi,  /* [max] the radius of the shield part */
    double *censhi,  /* [max] the z-coordinate of the center of the shield part */
@@ -93,7 +92,7 @@ typedef struct {
   double *curshi;
   double wirdia, foilth, bext, *traflx;
   double *M, *A, *X;
-  int    *difshi, *symshi, *symsol;
+  int    difshi, *symshi, *symsol;
 } magnet_data_t;
 
 // allocate memory and set it to zero
@@ -105,6 +104,7 @@ magnet_data_init(int max, int nn, magnet_data_t *d){
   d->wirdia = 0;
   d->foilth = 0;
   d->bext   = 0;
+  d->difshi = 0;
   size_t ds = sizeof(double);
   size_t is = sizeof(int);
   d->lenshi = (double *)calloc(ds, max);   assert(d->lenshi);
@@ -122,7 +122,6 @@ magnet_data_init(int max, int nn, magnet_data_t *d){
   d->M      = (double *)calloc(ds, nn*nn); assert(d->M);
   d->A      = (double *)calloc(ds, nn);    assert(d->A);
   d->X      = (double *)calloc(ds, nn);    assert(d->X);
-  d->difshi =    (int *)calloc(is, max);   assert(d->difshi);
   d->symshi =    (int *)calloc(is, max);   assert(d->symshi);
   d->symsol =    (int *)calloc(is, max);   assert(d->symsol);
 }
@@ -145,10 +144,10 @@ magnet_data_free(magnet_data_t *d){
   free(d->M);
   free(d->A);
   free(d->X);
-  free(d->difshi);
   free(d->symshi);
   free(d->symsol);
 }
+
 
 // wrappers for fortran functions
 void curren(magnet_data_t *d){
@@ -156,7 +155,7 @@ void curren(magnet_data_t *d){
   if (N>2500) iwkin_(&N);
 
   curren_(
-     &d->nn, &d->max, &d->nshi, d->difshi,
+     &d->nn, &d->max, &d->nshi, &d->difshi,
      d->lenshi, d->radshi, d->censhi, d->rhole, d->symshi,
      d->lensol, d->radsol, d->censol, d->layers, d->loops, d->symsol,
      d->cur, &d->wirdia, &d->foilth, &d->bext, d->traflx,
@@ -178,4 +177,3 @@ void flux(double z, double r, magnet_data_t *d, double *magflu){
      &d->wirdia, &d->foilth, d->cur, &d->bext, magflu);
 }
 
-}
