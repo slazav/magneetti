@@ -29,15 +29,23 @@ my $PosC = 0;   # position of the comp.coils:
 # Gradient coils
 my $IG = 1;   # current in the gradient coil
 my $EG = 52;    # gradient coil edge
-my $LG = 34.3;  # gradient coil length
+my $LG = 34.2;  # gradient coil length
 my $NG = 2;     # Layers
 my $LG2 = 44.6; # gradient coil second layer
 
 # Quadratic coils
-my $IQ = 1;  # current in the quadratic coil
-my $LQ = 35.4; # quadratic coil length
+my $IQ = 1;    # current in the quadratic coil
+my $LQ = 35.2; # quadratic coil length
 my $NQ = 2;    # Layers
 my $LQ2 = 0;   # quadratic coil second layer
+
+# 4-th power coils
+my $IF = 0;  # current in the coil
+my $LF1 = 14.0;  # gap length
+my $LF2 = 6.8;   # coil length
+#my $LF1 = 5.0;   # coil length
+#my $LF2 = 21;    # coil length
+my $NF = 2;    # Layers
 
 # Calculation range
 my $rm = 28;
@@ -48,8 +56,12 @@ my $dz = 2;
 # the calculation itself
 # -- run the calculation with magneettiSH + magnet programs
 # -- read data and calculate best fits and differences
+# Parameters:
+#  base - basename for result files
+#  func - function type 0 - const, 1-lin, 2-quadr, 4-four-power
 sub calc{
   my $base = shift;
+  my $func = shift;
   my $cmd;
 
   # Shields
@@ -109,6 +121,14 @@ sub calc{
     }
   }
 
+  # 4-th power
+  if ($IF!=0){
+#    $cmd.= sprintf("coil %f %f %f %i %i  %f 0\n",
+#      $LF1, $R0+($N0+$NQ)*$w, 0, $NF, int($LF1/$w), $IF);
+    $cmd.= sprintf("coil %f %f %f %i %i  %f 1\n",
+      $LF2, $R0+($N0+$NQ)*$w, $LF1/2+$LF2/2, $NF, int($LF2/$w), $IF);
+  }
+
   # wire and calculation range
   $cmd.= sprintf("wire %f %f\n", 0.12, 0);
   $cmd.= sprintf("field 0 %f %f %f %f %f\n", $dr, $rm, -$zm, $dz, $zm);
@@ -128,7 +148,10 @@ sub calc{
   ## read the calculated field profile, calculate integrals
   ## integral definitions see in ../opt_doc/
   open R, $resfile or die "can't open $resfile: $!\n";
-  my ($V0,$I1,$I2, $IDH,$ID1,$ID2, $IQH,$IQ1,$IQ2) = (0,0,0, 0,0,0, 0,0,0);
+  my ($V0,$I1,$I2) = (0,0,0);
+  my ($IDH,$ID1,$ID2) = (0,0,0);
+  my ($IQH,$IQ1,$IQ2) = (0,0,0);
+  my ($IFH,$IF1,$IF2) = (0,0,0);
 
   my $z0 = 0;
   my $r0 = 0;
@@ -137,87 +160,99 @@ sub calc{
     $_=~s/^\s+//;
     next if (/^\s*$/);
     my ($z,$r,$Bz,$Br) = split /\s+/;
+
+    my $f=0;
+    if    ($func==1) {$f = $z;}
+    elsif ($func==2) {$f = $z**2-$r**2/2.0;}
+    elsif ($func==4) {$f = $z**4-3*$r**2*$z**2+3.0/8*$r**4;}
+
     $V0  += $r;
     $I1 += $r*$Bz;
     $I2 += $r*$Bz**2;
-    $IDH += $r*$z*$Bz;
-    $ID1 += $r*$z;
-    $ID2 += $r*$z*$z;
-    $IQH += $r*($z**2-$r**2/2.0)*$Bz;
-    $IQ1 += $r*($z**2-$r**2/2.0);
-    $IQ2 += $r*($z**2-$r**2/2.0)**2;
+    $IFH += $r*$f*$Bz;
+    $IF1 += $r*$f;
+    $IF2 += $r*$f**2;
     $z0 = abs($z) if $z0 < abs($z);
     $r0 = abs($r) if $r0 < abs($r);
   }
   $I1 /= $V0;
   $I2 /= $V0;
-  $IDH /= $V0;
-  $ID1 /= $V0;
-  $ID2 /= $V0;
-  $IQH /= $V0;
-  $IQ1 /= $V0;
-  $IQ2 /= $V0;
+  $IFH /= $V0;
+  $IF1 /= $V0;
+  $IF2 /= $V0;
 
   # calculate best fits
-  my $H0 = $I1;
-  my $D = ($IDH-$ID1*$I1)/($ID2-$ID1**2);
-  my $H1 = $I1 - $D*$ID1;
-  my $Q = ($IQH-$IQ1*$I1)/($IQ2-$IQ1**2);
-  my $H2 = $I1 - $Q*$IQ1;
+  my $A0 = $func==0 ? 0:($IFH-$IF1*$I1)/($IF2-$IF1**2);
+  my $H0 = $I1 - $A0*$IF1;
+
 
   # calculate dimensionless, current-independent quality parameters
-  my $R0 = sqrt($I2 - 2*$H0*$I1 + $H0**2);
-  my $R1 = sqrt($I2 - 2*$H1*$I1 + $H1**2 + $D*($D*$ID2 - 2*$IDH + 2*$H1*$ID1));
-  my $R2 = sqrt($I2 - 2*$H2*$I1 + $H2**2 + $Q*($Q*$IQ2 - 2*$IQH + 2*$H2*$IQ1));
-  $R0/=abs($H0);
-  if ($D!=0) {$R1/=abs($D)*$z0;} else {$R1=0;}
-  if ($Q!=0) {$R2/=abs($Q)*$z0**2;} else {$R2=0;}
+  my $R0 = sqrt($I2 - 2*$H0*$I1 + $H0**2 + $A0*($A0*$IF2 - 2*$IFH + 2*$H0*$IF1));
+  if ($func==0){ $R0/=abs($H0); }
+  else { $R0/=abs($A0); }
+
+  if    ($func==1) {$R0/=$z0;}
+  elsif ($func==2) {$R0/=$z0**2;}
+  elsif ($func==4) {$R0/=$z0**4;}
 
   # write fits into a file
   open F, "> $fitfile" or die "Can't open $fitfile: $!\n";
   for (my $z=-$z0; $z<$z0; $z+=$z0/20){
-    printf F "%f %f %f %f %f\n",
-       $z, $H0, $H1+$z*$D, $H2+$z**2*$Q, $H2+($z**2-$r0**2/2.0)*$Q;
+    my $f1 = 0;
+    my $f2 = 0;
+    if    ($func==1) {$f1 = $z;}
+    elsif ($func==2) {$f1 = $z**2;}
+    elsif ($func==4) {$f1 = $z**4;}
+    if    ($func==1) {$f2 = $z;}
+    elsif ($func==2) {$f2 = $z**2-$r0**2/2.0;}
+    elsif ($func==4) {$f2 = $z**4-3*$r0**2*$z**2+3.0/8*$r0**4;}
+    printf F "%f %f %f\n", $z, $H0+$f1*$A0, $H0+$f2*$A0;
   }
   close F;
 
   # return parameters
-  return ($R0, $R1, $R2, $H0, $H1, $H2, $D, $Q);
+  return ($R0, $H0, $A0);
 }
 
 #############################################################################
 # just calculate and print all the parameters
 sub calc_fixed{
   # main solenoid
-  $I0=1; $IC=0; $IG = 0; $IQ = 0;
-  my ($RR00, $H00) = (calc("sol0"))[0,3];
+  $I0=1; $IC=0; $IG = 0; $IQ = 0; $IF=0;
+  my ($RR00,$H00,$A00) = calc("sol0", 0);
 
   # compensation coils
-  $I0=1; $IC=1; $IG = 0; $IQ = 0;
-  my ($RR0, $H0) = (calc("sol1"))[0,3];
+  $I0=1; $IC=1; $IG = 0; $IQ = 0; $IF=0;
+  my ($RR0,$H0,$A0) = calc("sol1", 0);
 
   # gradient coils
-  $I0=0; $IC=0; $IG = 1; $IQ = 0;
-  my ($RR1,$H1,$D) = (calc("sol2"))[1,4,6];
+  $I0=0; $IC=0; $IG = 1; $IQ = 0; $IF=0;
+  my ($RR1,$H1,$A1) = calc("sol2", 1);
 
   # quadratic coils
-  $I0=0; $IC=0; $IG = 0; $IQ = 1;
-  my ($RR2,$H2,$Q) = (calc("sol3"))[2,5,7];
+  $I0=0; $IC=0; $IG = 0; $IQ = 1; $IF=0;
+  my ($RR2,$H2,$A2) = calc("sol3",2);
+
+  # 4-th power coils
+  $I0=0; $IC=0; $IG = 0; $IQ = 0; $IF = 1;
+  my ($RR3,$H3,$A3) = calc("sol4",4);
 
   printf "\nField inhomogeneity and profile in %.1fx%.1f volume:\n", 2*$rm, 2*$zm;
   printf "Main: R = %e, H = %f G/A\n", $RR00, $H00;
   printf "Comp: R = %e, H = %f G/A\n", $RR0, $H0;
-  printf "Grad: R = %e, H = %F z, G/A\n", $RR1, $D;
-  printf "Quad: R = %e, H = %f - %F (z^2-r^2/2), G/A\n", $RR2, $H2, -$Q;
+  printf "Grad: R = %e, H = %F z, G/A\n", $RR1, $A1*10;
+  printf "Quad: R = %e, H = %f - %F (z^2-r^2/2), G/A\n", $RR2, $H2, -$A2*100;
+  printf "Quad: R = %e, H = %f - %F f_4, G/A\n", $RR3, $H3, -$A3*1e4;
 }
 
 
 #############################################################################
 # optimization region
-$rm = 10;
-$dr = 0.5;
-$zm = 10;
-$dz = 0.5;
+$rm = 5;
+$dr = 0.2;
+$zm = 5;
+$dz = 0.2;
+
 
 #############################################################################
 # optimize compensation coils
@@ -228,9 +263,9 @@ if (0){  # do optimization
   open OO, "> sol1.opt" or die "can't open sol1.opt: $!";
   #for ($NC = 2; $NC<=10; $NC+=2){
     #for ($EC = 52; $EC > 42; $EC-=1){
-      #for ($LC = 13; $LC < 20; $LC+=0.1){
-        for ($LC2 = 0; $LC2 < 50; $LC2+=0.2){
-          my $RR = (calc("sol1"))[0];
+      for ($LC = 13; $LC < 16; $LC+=0.1){
+        #for ($LC2 = 0; $LC2 < 50; $LC2+=0.2){
+          my $RR = (calc("sol1",0))[0];
           printf "min1: %f %f %f %f -- %e\n", $NC, $LC, $LC2, $EC, $RR;
           printf OO "%f %f %f %f  %e\n", $NC, $LC, $LC2, $EC, $RR;
           if ($RR0 > $RR) {
@@ -262,9 +297,9 @@ if (0){  # do optimization
   open OO, "> sol2.opt" or die "can't open sol2.opt: $!";
   $EG=52;
   #for ($EG = 39; $EG > 10; $EG-=1){
-    for ($LG = 34.3; $LG < 35; $LG+=1){
-      for ($LG2 = 43; $LG2 < 50; $LG2+=0.2){
-        my $RR = (calc("sol2"))[1];
+    for ($LG = 34.2; $LG < 35; $LG+=1){
+      for ($LG2 = 43; $LG2 < 46; $LG2+=0.2){
+        my $RR = (calc("sol2",1))[0];
         printf "min2: %f %f %f %f -- %.12f\n", $NG, $LG, $LG2, $EG, $RR;
         printf OO "%f %f %f %f  %e\n", $NG, $LG, $LG2, $EG, $RR;
         if ($RR1 > $RR) {
@@ -293,7 +328,7 @@ if (0){  # do optimization
   open OO, "> sol3.opt" or die "can't open sol3.opt: $!";
   for ($LQ = 34; $LQ < 38; $LQ+=0.2){
 #    for ($LQ2 = 27; $LQ2 <=34; $LQ2+=0.2){
-      my $RR = (calc("sol3"))[2];
+      my $RR = (calc("sol3",2))[0];
       printf "min3: %f %f -- %.12f\n", $LQ, $LQ2, $RR;
       printf OO "%f %f %.12f\n", $LQ, $LQ2, $RR;
       if ($RR2 > $RR) {
@@ -308,6 +343,31 @@ if (0){  # do optimization
   $LQ = $LQm;
   $LQ2 = $LQ2m;
   printf "res3: %f %f -- %.12f\n", $LQ, $LQ2, $RR2;
+}
+
+# 4-power coils
+$I0=0; $IC=0; $IG = 0; $IQ = 0; $IF=1;
+my $RR3 = 1e6;
+if (0){  # do optimization
+  my ($LF1m, $LF2m) = ($LF1, $LF2);
+  open OO, "> sol4.opt" or die "can't open sol4.opt: $!";
+  for ($LF1 = 14; $LF1 < 14.1; $LF1+=0.2){
+    for ($LF2 = 6.5; $LF2 <7.3; $LF2+=0.1){
+      my $RR = (calc("sol4",4))[0];
+      printf "min4: %f %f -- %.12f\n", $LF1, $LF2, $RR;
+      printf OO "%f %f %.12f\n", $LF1, $LF2, $RR;
+      if ($RR3 > $RR) {
+        $RR3 = $RR;
+        $LF1m = $LF1;
+        $LF2m = $LF2;
+      }
+    }
+    printf OO "\n";
+  }
+  close OO;
+  $LF1 = $LF1m;
+  $LF2 = $LF2m;
+  printf "res4:  %f %f -- %.12f\n", $LF1, $LF2, $RR3;
 }
 
 calc_fixed();
@@ -336,11 +396,11 @@ if (0){  # do optimization
 #############################################################################
 #############################################################################
 # half region
-if (0){
-$rm = 5;
-$dr = 0.2;
-$zm = 5;
-$dz = 0.2;
+if (1){
+$rm = 10;
+$dr = 0.5;
+$zm = 10;
+$dz = 0.5;
 calc_fixed();
 }
 
