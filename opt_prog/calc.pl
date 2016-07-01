@@ -41,7 +41,7 @@ my $LQ2 = 0;   # quadratic coil second layer
 
 # 4-th power coils
 my $IF = 0;  # current in the coil
-my $LF1 = 14.0;  # gap length
+my $LF1 = 14.8;  # gap length
 my $LF2 = 6.8;   # coil length
 #my $LF1 = 5.0;   # coil length
 #my $LF2 = 21;    # coil length
@@ -242,7 +242,7 @@ sub calc_fixed{
   printf "Comp: R = %e, H = %f G/A\n", $RR0, $H0;
   printf "Grad: R = %e, H = %F z, G/A\n", $RR1, $A1*10;
   printf "Quad: R = %e, H = %f - %F (z^2-r^2/2), G/A\n", $RR2, $H2, -$A2*100;
-  printf "Quad: R = %e, H = %f - %F f_4, G/A\n", $RR3, $H3, -$A3*1e4;
+  printf "Four: R = %e, H = %f - %F f_4, G/A\n", $RR3, $H3, -$A3*1e4;
 }
 
 
@@ -351,8 +351,8 @@ my $RR3 = 1e6;
 if (0){  # do optimization
   my ($LF1m, $LF2m) = ($LF1, $LF2);
   open OO, "> sol4.opt" or die "can't open sol4.opt: $!";
-  for ($LF1 = 14; $LF1 < 14.1; $LF1+=0.2){
-    for ($LF2 = 6.5; $LF2 <7.3; $LF2+=0.1){
+  for ($LF1 = 14.8; $LF1 < 14.81; $LF1+=0.2){
+    for ($LF2 = 5.5; $LF2 <7.3; $LF2+=0.1){
       my $RR = (calc("sol4",4))[0];
       printf "min4: %f %f -- %.12f\n", $LF1, $LF2, $RR;
       printf OO "%f %f %.12f\n", $LF1, $LF2, $RR;
