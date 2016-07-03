@@ -1,6 +1,12 @@
 #!/usr/bin/gnuplot
 
 #set terminal fig metric color
+
+plot\
+ "sol0.fld" using 1:3 with lines title "calculated data - no grad, no quad",\
+ "sol0.fit" using 1:2 with lines lc 0 title "constant fit"
+pause -1
+
 #set output "pl_a.fig"
 plot\
  "sol1.fld" using 1:3 with lines title "calculated data - no grad, no quad",\

@@ -42,7 +42,7 @@ my $LQ2 = 0;   # quadratic coil second layer
 # 4-th power coils
 my $IF = 0;  # current in the coil
 my $LF1 = 14.8;  # gap length
-my $LF2 = 6.8;   # coil length
+my $LF2 = 5.9;   # coil length
 #my $LF1 = 5.0;   # coil length
 #my $LF2 = 21;    # coil length
 my $NF = 2;    # Layers
@@ -67,7 +67,8 @@ sub calc{
   # Shields
   # len rad hrad center flux sym
   $cmd.= sprintf("shield %f %f 0  0 0 0\n", $Ls, $Rs);
-  $cmd.= sprintf("shield  0 %f 0 %f 0 1\n", $Rs, $Ls/2);
+  $cmd.= sprintf("shield  0 %f 0 %f 0 0\n", $Rs, $Ls/2);
+  $cmd.= sprintf("shield  0 %f 2.5 %f 0 0\n", $Rs, -$Ls/2);
 
   # Solenoids
   # len rad center layers turns current sym
