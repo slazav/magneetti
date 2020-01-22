@@ -107,8 +107,8 @@ Cjl   ausgeben
 C
       INTEGER FILE, MAX, LAYERS(MAX)
       DOUBLE PRECISION LENSOL(MAX), RADSOL(MAX), CENSOL(MAX),
-     1                LOOPS(MAX), CUR(MAX), WIRDIA, FOILTH, BEXT,TRAFLX,
-     2                BCNTR
+     1                LOOPS(MAX), CUR(MAX), WIRDIA, FOILTH, BEXT,
+     2                TRAFLX(MAX),BCNTR
       LOGICAL SYMSOL(MAX)
 C
       INTEGER ISOL
