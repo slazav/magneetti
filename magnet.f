@@ -201,7 +201,7 @@ C
      3               LOOPS(MAX), CUR(MAX), WIRDIA, FOILTH, BEXT
       LOGICAL DIFSHI, SYMSHI(MAX), SYMSOL(MAX)
 C
-      INTEGER ISHI, ISOL
+      INTEGER ISHI, ISOL, I
       LOGICAL HOLE
       CHARACTER*1 ANSW
 C           (* ISHI : index of the shield part                    *)
@@ -211,6 +211,23 @@ C           (*        shield,  so  that  there  can  be a trapped *)
 C           (*        flux ; .FALSE. otherwise                    *)
 C                  ...............................
 C
+C     initialize variables
+      DO 2800 I = 1, MAX
+        LENSHI(I) = 0
+        RADSHI(I) = 0
+        RHOLE(I) = 0
+        TRAFLX(I) = 0
+        CENSHI(I) = 0
+        LENSOL(I) = 0
+        RADSOL(I) = 0
+        CENSOL(I) = 0
+        LOOPS(I) = 0
+        CUR(I) = 0
+        SYMSHI(I) = .FALSE.
+        SYMSOL(I) = .FALSE.
+ 2800 CONTINUE
+
+
       PRINT 2801
  2801 FORMAT('This  program  calculates  magnetic  fields  produced',
      1                                            ' by  a system of'/,
