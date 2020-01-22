@@ -72,8 +72,8 @@ fi
 
 
 {
-  echo "$ncoils"
-  echo "$nshields"
+#  echo "$ncoils"
+#  echo "$nshields"
   echo "y"; # change shield
 
   ### shields
