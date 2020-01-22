@@ -1,0 +1,98 @@
+#!/bin/sh -efu
+
+# V.Zavjalov, 2013-02-28
+# convert human-readable coil description to a gnuplot file
+# for plotting field profiles
+
+# See input file example in magneettiSH
+
+if [ "$#" != 1 ]; then
+  echo "usage: $0 <file>"
+  exit 1
+fi
+
+file=$1
+base="${file%%.*}"
+
+[ ! -f "$base.plot" ] || mv -f -- $base.plot $base.plot.bak
+
+shields="$(grep "^shield " "$file")" ||:
+coils="$(grep "^coil " "$file")" ||:
+wire="$(grep "^wire " "$file")" ||:
+field="$(grep "^field " "$file")" ||:
+
+nshields="$(echo $shields | wc -l)"
+ncoils="$(echo $coils | wc -l)"
+
+if [ "$(echo $wire | wc -l)" -lt 1 ]; then
+  echo "Error: no wire settings!" > /dev/stderr
+  exit 1
+fi
+if [ "$(echo $field | wc -l)" -lt 1 ]; then
+  echo "Error: no field setting!" > /dev/stderr
+  exit 1
+fi
+
+
+{
+
+  echo "#!/usr/bin/gnuplot"
+  echo "set pm3d at b"
+  echo "set palette rgbformulae 22,13,-31"
+  echo "set view 0,0"
+
+  echo "set xlabel \"Z\""
+  echo "set ylabel \"R\""
+
+  ### shields
+  echo "$shields" |
+  while read cmd len rad hrad center flux sym; do
+    if [ "$len" -gt 0 ]; then
+      echo "set arrow from ($center)-($len)/2,$rad to ($center)+($len)/2,$rad lw 2 lc \"red\" front nohead"
+      [ "$sym" = 0 ] ||
+        echo "set arrow from -($center)-($len)/2,$rad to -($center)+($len)/2,$rad lw 2 lc \"red\" front nohead"
+    else
+      echo "set arrow from $center,$hrad to $center,$rad lw 2 lc \"red\" front nohead"
+      [ "$sym" = 0 ] ||
+        echo "set arrow from -($center),$hrad to -($center),$rad lw 2 lc \"red\" front nohead"
+    fi
+  done || exit 1
+
+  echo "$wire" | {
+    read wcmd wdiam wfoil
+
+    ### coils
+    echo "$coils" |
+    while read cmd len rad center layers turns current sym; do
+      echo "set arrow from ($center)-($len)/2,$rad to ($center)+($len)/2,$rad lw 2 front nohead"
+      [ "$sym" = 0 ] ||
+        echo "set arrow from -($center)-($len)/2,$rad to -($center)+($len)/2,$rad lw 2 front nohead"
+      echo "set arrow from ($center)-($len)/2,$rad+($wdiam*$layers) to ($center)+($len)/2,$rad+($wdiam*$layers) lw 2 front nohead"
+      [ "$sym" = 0 ] ||
+        echo "set arrow from -($center)-($len)/2,$rad+($wdiam*$layers) to -($center)+($len)/2,$rad+($wdiam*$layers) lw 2 front nohead"
+    done || exit 1
+  }
+
+
+
+  ### plot fields
+  echo "$field" | {
+    read cmd r1 dr r2 z1 dz z2
+
+    echo "set title \"Bz\""
+    echo "splot [$z1:$z2] [$r1:$r2]\\"
+    echo "  \"$base.fld\" using 1:2:3 with pm3d title \"Bz\""
+    echo "pause -1"
+
+    echo "title \"Br\""
+    echo "splot [$z1:$z2] [$r1:$r2]\\"
+    echo "  \"$base.fld\" using 1:2:4 with pm3d title \"Bz\""
+    echo "pause -1"
+
+  } || exit 1
+  echo "n" # continue same parameters
+  echo "n" # continue
+} > $base.plot
+
+chmod 755 $base.plot
+
