@@ -67,6 +67,8 @@ C
       DOUBLE PRECISION DELRF, DELRJ
 C                  ...............................
 C
+      IF (K.GT.1D0-1D-14) K=1D0-1D-14
+      IF (N.GT.1D0-1D-14) N=1D0-1D-14
       ELLIP3 = DELRF(0D0, 1D0-K, 1D0) +
      1         DELRJ(0D0, 1D0-K, 1D0, 1D0-N)*N/3D0
 C
@@ -279,6 +281,8 @@ C
       R2 = (RAD+R)*(RAD+R) + KSI2*KSI2
       K1 = 4D0*RAD*R/R1
       K2 = 4D0*RAD*R/R2
+      IF (K1.GT.1D0-1D-14) K1=1D0-1D-14
+      IF (K2.GT.1D0-1D-14) K2=1D0-1D-14
 C
       CYLBR = ((2D0*DELE(K2)-(2D0-K2)*DELK(K2))*DSQRT(R2) -
      1         (2D0*DELE(K1)-(2D0-K1)*DELK(K1))*DSQRT(R1)) *
