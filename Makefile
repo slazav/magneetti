@@ -1,12 +1,6 @@
-#FFLAGS= -Werror -Wconversion\
-#  -Wline-truncation\
-#  -Waliasing  -Wampersand -Warray-bounds -Wcharacter-truncation\
-#  -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow\
-#  -Wno-unused-parameter -fPIC -fno-range-check -O\
-#  -std=legacy
-
-
+#  -g -fbacktrace -ffpe-trap=invalid,zero,overflow,underflow,denormal\
 FFLAGS= -g -Wconversion\
+  -ffpe-summary=none\
   -Wline-truncation\
   -Waliasing  -Wampersand -Warray-bounds -Wcharacter-truncation\
   -Wline-truncation -Wno-tabs -Wunderflow\
@@ -17,7 +11,6 @@ FFLAGS= -g -Wconversion\
 all: magnet magnet_new libmagneetti.so
 
 magnet: magnet.f magnet_lib.f magnnum.f
-	g77 -O9 -o magnet $+
 
 magnet_new.o: magnet.h magnet_new.cpp
 magnet_new: magnet_new.o magnet_lib.o magnnum.o
