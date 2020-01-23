@@ -26,3 +26,9 @@ octave: libmagneetti.so
 
 clean:
 	rm -f magnet magnet_new libmagneetti.so *.o
+
+
+
+install: all
+	mkdir -p ${bindir}
+	install -m755 magnet_new ${bindir}
