@@ -12,7 +12,10 @@ magneettiUI -- tcl/tk interface
 magneettiSH -- command interface (see test.txt file)
                 -- Vladislav Zavjalov, 2014
 
-magnet_new  --  new command interface similar to magneettiSH
-                Shild calcs do not work now!
+magnet_new  --  new command interface similar to magneettiSH + magnet
                 -- Vladislav Zavjalov, 2016
 
+
+KNOWN PROBLEMS:
+- set up calculation grid in such a way that it does not match with
+  shield radius. Sometimes calculation just stops there.
