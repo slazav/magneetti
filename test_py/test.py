@@ -21,8 +21,8 @@ shields = ( {'len':180, 'rad':20.01},\
 #  len:    coil length [mm], should be set to some positive value
 #  rad:    inner radius [mm], should be set to some positive value
 #  cnt:    center of solenoid [mm], default 0
-#  layers: number of layers, default 1
-#  turns:  turns per layer, default 1
+#  layers: number of layers, default 0
+#  turns:  turns per layer, default 0
 #  curr:   current [A], default 0
 #  sym:    add symmetric coil, default 0
 
@@ -44,56 +44,37 @@ field = {'r1':0, 'dr':0.5, 'r2':20,\
          'z1':-100, 'dz':5, 'z2':100}
 
 ###################################################
-
-def magnet_data_test(shields, coils, wire, field):
-  for i in shields:
-    if not 'len'  in i: i['len']  = 0
-    if not 'hole' in i: i['hole'] = 0
-    if not 'cnt'  in i: i['cnt']  = 0
-    if not 'flux' in i: i['flux']  = 0
-    if not 'sym'  in i: i['sym']  = 0
-    if i['sym']!=0: i['sym'] = 1
-    if not 'rad' in i: raise NameError('shield radius is not set')
-    if i['rad'] <= 0:  raise NameError('non-positive shield radius')
-
-  for i in coils:
-    if not 'len'  in i: raise NameError('coil length is not set')
-    if i['len'] <= 0:   raise NameError('non-positive coil length')
-    if not 'rad'  in i: raise NameError('coil radius is not set')
-    if i['rad'] <= 0:   raise NameError('non-positive coil radius')
-    if not 'cnt'    in i: i['cnt']  = 0
-    if not 'layers' in i: i['layers'] = 1
-    if not 'turns'  in i: i['turns']  = 1
-    if not 'curr'   in i: i['curr']   = 0
-    if not 'sym'    in i: i['sym']  = 0
-    if i['sym']!=0: i['sym'] = 1
-
-  if not 'th'   in wire: raise NameError('wire thickness is not set')
-  if not 'foil' in wire: wire['foil'] = -0.134
-
-  if not 'dr'   in field: raise NameError('field dr is not set')
-  if not 'r1'   in field: raise NameError('field r1 is not set')
-  if not 'r2'   in field: raise NameError('field r2 is not set')
-  if not 'dz'   in field: raise NameError('field dz is not set')
-  if not 'z1'   in field: raise NameError('field z1 is not set')
-  if not 'z2'   in field: raise NameError('field z2 is not set')
-
-###################################################
+### Calculate magnetic field profile for he coil system
+### using the `magnet` program
 def magnet_calc(shields, coils, wire, field):
   inp = ''
   for i in shields:
     inp += 'shield %f %f %f %f %f %d\n' %\
-           (i['len'], i['rad'], i['hole'], i['cnt'], i['flux'], i['sym'])
+           (i.get('len',0), i.get('rad',0), i.get('hole',0),\
+            i.get('cnt',0), i.get('flux',0), i.get('sym',0))
   for i in coils:
+    clen=i.get('len',0)
+    crad=i.get('rad',0)
+    ccnt=i.get('cnt',0)
+    clay=i.get('layers',0)
+    ctrn=i.get('turns',0)
+    curr=i.get('curr',0)
+    sym=i.get('sym',0)
+    if (curr==0) or (clen==0) or (crad==0) or\
+       (clay==0) or (cturn==0): continue
     inp += 'coil %f %f %f %d %d %f %d\n' %\
-           (i['len'], i['rad'], i['cnt'], i['layers'], i['turns'], i['curr'], i['sym'])
+           (clen,crad,ccnt,clay,ctrn,curr,sym)
 
   inp += 'wire %f %f\n' % (wire['th'], wire['foil'])
-  inp += 'field %f %f %f %f %f %f\n' %\
-          (field['r1'], field['dr'], field['r2'],\
-           field['z1'], field['dz'], field['z2'])
+  r1=field.get('r1',0)
+  dr=field.get('dr',0)
+  r2=field.get('r2',0)
+  z1=field.get('z1',0)
+  dz=field.get('dz',0)
+  z2=field.get('z2',0)
+  inp += 'field %f %f %f %f %f %f\n' % (r1,dr,r2,z1,dz,z2)
 
-  print(inp)
+  # print(inp) # `inp` contains magnet description for magnet_new/magnetSH programs
   proc = subprocess.Popen('../magnet_new', stdin=subprocess.PIPE, stdout=subprocess.PIPE)
   try:
     outs, errs = proc.communicate(timeout=15, input=inp.encode())
@@ -101,8 +82,8 @@ def magnet_calc(shields, coils, wire, field):
     proc.kill()
     outs, errs = proc.communicate()
 
-  rr = numpy.arange(field['r1'], field['r2']+field['dz']/2, field['dr']);
-  zz = numpy.arange(field['z1'], field['z2']+field['dz']/2, field['dz']);
+  rr = numpy.arange(r1, r2+dr/2, dr);
+  zz = numpy.arange(z1, z2+dz/2, dz);
   Brr = numpy.zeros((rr.size, zz.size));
   Bzz = numpy.zeros((rr.size, zz.size));
 
@@ -120,12 +101,12 @@ def magnet_calc(shields, coils, wire, field):
   return (zz, rr, Bzz, Brr)
 
 ###################################################
-magnet_data_test(shields, coils, wire, field)
 
 (zz, rr, Bzz, Brr) = magnet_calc(shields, coils, wire, field)
 
-import matplotlib.cm as cm
 
+
+import matplotlib.cm as cm
 fig, (ax1,ax2) = plt.subplots(nrows=2)
 Bzz=numpy.flip(Bzz,axis=0)
 Brr=numpy.flip(Brr,axis=0)
@@ -136,7 +117,6 @@ im = ax2.imshow(Brr, interpolation='bilinear', cmap=cm.seismic,
                origin='lower', extent=[field['z1'], field['z2'], field['r1'], field['r2']],
                vmax=abs(Bzz).max(), vmin=-abs(Bzz).max())
 fig.colorbar(im, ax=ax2, orientation='horizontal', fraction=0.05, pad=0.2)
-
 
 plt.show()
 
