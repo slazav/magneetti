@@ -38,7 +38,7 @@ extern void curren_( /* Calculates the current distribution in the shield. */
    double *traflx,  /* [max] the flux trapped in the center of the shield part */
    double *M,       /* [nn,nn] */
    double *A,       /* [nn] */
-   double *X        /* [nn] */
+   double *curshi   /* [nn] */
 );
 extern void field_( /* Calculates the magnetic field in the point (r, z). */
    double *z,       /* z coordinate */
@@ -95,7 +95,7 @@ typedef struct {
   int    *layers;
   double *curshi;
   double wirdia, foilth, bext, *traflx;
-  double *M, *A, *X;
+  double *M, *A;
   int    difshi, *symshi, *symsol;
 } magnet_data_t;
 
@@ -125,7 +125,6 @@ magnet_data_init(magnet_data_t *d){
   d->curshi = (double *)calloc(ds, nn);    assert(d->curshi);
   d->M      = (double *)calloc(ds, nn*nn); assert(d->M);
   d->A      = (double *)calloc(ds, nn);    assert(d->A);
-  d->X      = (double *)calloc(ds, nn);    assert(d->X);
   d->symshi =    (int *)calloc(is, max);   assert(d->symshi);
   d->symsol =    (int *)calloc(is, max);   assert(d->symsol);
 }
@@ -147,7 +146,6 @@ magnet_data_free(magnet_data_t *d){
   free(d->curshi);
   free(d->M);
   free(d->A);
-  free(d->X);
   free(d->symshi);
   free(d->symsol);
 }
@@ -166,7 +164,7 @@ void curren(magnet_data_t *d){
      d->lenshi, d->radshi, d->censhi, d->rhole, d->symshi,
      d->lensol, d->radsol, d->censol, d->layers, d->loops, d->symsol,
      d->cur, &d->wirdia, &d->foilth, &d->bext, d->traflx,
-     d->M, d->A, d->X);
+     d->M, d->A, d->curshi);
 }
 
 void field(double z, double r, magnet_data_t *d,
