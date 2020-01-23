@@ -6,11 +6,11 @@
 # * trapped flux, gauss/cm2
 # * add symmetric shield
 
-shield 180 20 0 0 0 0
-shield   0 20 0 -90 0 0
-shield   0 20 10 90 0 0
+shield 180 20.1 0 0 0 0
+shield   0 20.1 0 -90 0 0
+shield   0 20.1 10.1 90 0 0
 
-shield 10 5 0 0 0 0
+shield 10 5.1 0 0 0 0
 
 ### coils
 # * coil length, mm

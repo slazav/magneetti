@@ -47,7 +47,7 @@ fi
   ### shields
   echo "$shields" |
   while read cmd len rad hrad center flux sym; do
-    if [ "$len" != 0 ]; then
+    if [ $(echo "$len == 0" | bc) == 0 ]; then
       echo "set arrow from ($center)-($len)/2,$rad to ($center)+($len)/2,$rad lw 2 lc \"red\" front nohead"
       [ "$sym" = 0 ] ||
         echo "set arrow from -($center)-($len)/2,$rad to -($center)+($len)/2,$rad lw 2 lc \"red\" front nohead"
