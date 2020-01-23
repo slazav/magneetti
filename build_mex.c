@@ -277,7 +277,7 @@ mexFunction(int nlhs, mxArray *plhs[],
   curren_(
      &nn, &max, &nshi, difshi, lenshi, radshi, censhi, rhole,
      symshi, lensol, radsol, censol, layers, loops,
-     symsol, cur, &wirdia, &foilth, &bext, &traflx, M, A, X);
+     symsol, cur, &wirdia, &foilth, &bext, &traflx, M, A, curshi);
 
   field_(&z, &r, &nn, &max, &nshi, lenshi, radshi, censhi, rhole,
      curshi, censol, lensol, radsol, loops, layers,

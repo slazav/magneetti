@@ -22,7 +22,7 @@ libmagneetti.so: magnet_lib.f magnnum.f
 
 octave: libmagneetti.so
 	rm -f *.mex
-	octave -q --eval 'build_mex'
+	octave-cli -q --eval 'build_mex'
 
 clean:
 	rm -f magnet magnet_new libmagneetti.so *.o
