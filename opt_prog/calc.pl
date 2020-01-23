@@ -131,7 +131,7 @@ sub calc{
   }
 
   # wire and calculation range
-  $cmd.= sprintf("wire %f %f\n", 0.12, 0);
+  $cmd.= sprintf("wire %f %f\n", $w, 0);
   $cmd.= sprintf("field 0 %f %f %f %f %f\n", $dr, $rm, -$zm, $dz, $zm);
 
   my $txtfile = $base . '.txt';
