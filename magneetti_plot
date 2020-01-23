@@ -47,7 +47,7 @@ fi
   ### shields
   echo "$shields" |
   while read cmd len rad hrad center flux sym; do
-    if [ "$len" -gt 0 ]; then
+    if [ "$len" != 0 ]; then
       echo "set arrow from ($center)-($len)/2,$rad to ($center)+($len)/2,$rad lw 2 lc \"red\" front nohead"
       [ "$sym" = 0 ] ||
         echo "set arrow from -($center)-($len)/2,$rad to -($center)+($len)/2,$rad lw 2 lc \"red\" front nohead"
@@ -84,7 +84,7 @@ fi
     echo "  \"$base.fld\" using 1:2:3 with pm3d title \"Bz\""
     echo "pause -1"
 
-    echo "title \"Br\""
+    echo "set title \"Br\""
     echo "splot [$z1:$z2] [$r1:$r2]\\"
     echo "  \"$base.fld\" using 1:2:4 with pm3d title \"Bz\""
     echo "pause -1"
