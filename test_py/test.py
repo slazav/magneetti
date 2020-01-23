@@ -41,7 +41,7 @@ wire = { 'th':0.12, 'foil': 0}
 ##    r1 dr r2  z1  dz z2
 
 field = {'r1':0, 'dr':0.5, 'r2':20,\
-         'z1':-100, 'dz':5, 'z2':100}
+         'z1':-100, 'dz':1, 'z2':100}
 
 ###################################################
 ### Calculate magnetic field profile for he coil system
@@ -61,11 +61,11 @@ def magnet_calc(shields, coils, wire, field):
     curr=i.get('curr',0)
     sym=i.get('sym',0)
     if (curr==0) or (clen==0) or (crad==0) or\
-       (clay==0) or (cturn==0): continue
+       (clay==0) or (ctrn==0): continue
     inp += 'coil %f %f %f %d %d %f %d\n' %\
            (clen,crad,ccnt,clay,ctrn,curr,sym)
 
-  inp += 'wire %f %f\n' % (wire['th'], wire['foil'])
+  inp += 'wire %f %f\n' % (wire.get('th',0), wire.get('foil',0))
   r1=field.get('r1',0)
   dr=field.get('dr',0)
   r2=field.get('r2',0)
@@ -107,16 +107,56 @@ def magnet_calc(shields, coils, wire, field):
 
 
 import matplotlib.cm as cm
-fig, (ax1,ax2) = plt.subplots(nrows=2)
+fig, axs = plt.subplots(nrows=3, sharex=True)
 Bzz=numpy.flip(Bzz,axis=0)
 Brr=numpy.flip(Brr,axis=0)
-im = ax1.imshow(Bzz, interpolation='bilinear', cmap=cm.seismic,
-               origin='lower', extent=[field['z1'], field['z2'], field['r1'], field['r2']],
-               vmax=abs(Bzz).max(), vmin=-abs(Bzz).max())
-im = ax2.imshow(Brr, interpolation='bilinear', cmap=cm.seismic,
-               origin='lower', extent=[field['z1'], field['z2'], field['r1'], field['r2']],
-               vmax=abs(Bzz).max(), vmin=-abs(Bzz).max())
-fig.colorbar(im, ax=ax2, orientation='horizontal', fraction=0.05, pad=0.2)
+im = axs[0].imshow(Bzz, interpolation='bilinear', cmap=cm.seismic,
+            origin='lower', extent=[field['z1'], field['z2'], field['r1'], field['r2']],
+            vmax=abs(Bzz).max(), vmin=-abs(Bzz).max())
+im = axs[1].imshow(Brr, interpolation='bilinear', cmap=cm.seismic,
+            origin='lower', extent=[field['z1'], field['z2'], field['r1'], field['r2']],
+            vmax=abs(Bzz).max(), vmin=-abs(Bzz).max())
+fig.colorbar(im, ax=axs[1], orientation='horizontal', fraction=0.05, pad=0.2)
+
+wth = wire.get('th', 0)
+fth = wire.get('foil', 0)
+for a in axs[0:2]:
+  for i in coils:
+    clen=i.get('len',0)
+    crad=i.get('rad',0)
+    ccnt=i.get('cnt',0)
+    clay=i.get('layers',0)
+    ctrn=i.get('turns',0)
+    curr=i.get('curr',0)
+    sym=i.get('sym',0)
+    if (curr==0) or (clen==0) or (crad==0) or\
+       (clay==0) or (ctrn==0): continue
+    r1 = crad
+    r2 = crad+clay*(wth+fth)
+    for i in range(sym+1):
+      z1 = (1-2*i)*ccnt-clen/2
+      z2 = (1-2*i)*ccnt+clen/2
+      a.plot([z1,z1,z2,z2,z1], [r1,r2,r2,r1,r1], 'g-')
+
+  for i in shields:
+    slen=i.get('len',0)
+    srad=i.get('rad',0)
+    shol=i.get('hole',0)
+    scnt=i.get('cnt',0)
+    sym=i.get('sym',0)
+
+    for i in range(sym+1):
+      if slen==0: # disk
+        z1 = (1-2*i)*scnt
+        a.plot([z1,z1], [shol,srad], 'm-')
+      else:
+        z1 = (1-2*i)*scnt-slen/2
+        z2 = (1-2*i)*scnt+slen/2
+        a.plot([z1,z2], [srad,srad], 'm-')
+
+  axs[2].plot([zz[0], zz[-1]], [0,0], 'k-')
+  axs[2].plot(zz, Bzz[-1,:], 'r-')
+
 
 plt.show()
 
