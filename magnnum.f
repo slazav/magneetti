@@ -3936,27 +3936,29 @@ C                                  INITIALIZE
          IFERR7 = 0
          PLEN = 1
          MAXLEV = 50
-         DO 10  L=2, 51
+         DO L=2, 51
             ERTYPE(L) = -1
             ERCODE(L) = -1
             IALLOC(L) = 0
             ISUSER(L) = .FALSE.
-   10    CONTINUE
-         DO 20  L=1, 7
+         ENDDO
+         DO L=1, 7
             HDRFMT(L) = 1
             TRACON(L) = 1
-   20    CONTINUE
+         ENDDO
          PROLVL = 1
-         DO 30  L=1, 10
-   30    ICALOC(L) = 0
+         DO L=1, 10
+           ICALOC(L) = 0
+         ENDDO
          XXLINE(1) = 0
          XXPLEN(1) = 1
          XXPROC(1) = '?'
          RNAME(1) = 'USER'
          PRINTB(1) = 0
          PRINTB(2) = 0
-         DO 40  L=3, 7
-   40    PRINTB(L) = 1
+         DO L=3, 7
+           PRINTB(L) = 1
+         ENDDO
          STOPTB(1) = 0
          STOPTB(2) = 0
          STOPTB(3) = 0
@@ -4250,8 +4252,9 @@ C                                  LOOK AT NEXT CHARACTER
          ISUB = 0
          IF (M .GT. LEN2-4) THEN
             LAST = LEN2 - M + 1
-            DO 30  I=1, LAST
-   30       MSGSAV(MS+I) = MSGTMP(M+I-1)
+            DO I=1, LAST
+              MSGSAV(MS+I) = MSGTMP(M+I-1)
+            ENDDO
             MSGLEN = MS + LAST
             GO TO 40
          ELSE IF (MSGTMP(M).EQ.PERCNT .AND. MSGTMP(M+1).EQ.LPAR .AND.
@@ -4537,20 +4540,24 @@ C                                  INITIALIZE ERROR TABLE IF NECESSARY
       IF (IER .EQ. 0) THEN
          IF (IERTYP .EQ. 0) THEN
             IF (IPATT.EQ.0 .OR. IPATT.EQ.1) THEN
-               DO 10  I=1, 7
-   10          PRINTB(I) = IPATT
+               DO I=1, 7
+                 PRINTB(I) = IPATT
+               ENDDO
             ELSE IF (IPATT .EQ. 2) THEN
 C                                  ASSIGN DEFAULT SETTINGS
-               DO 20  I=1, 7
-   20          PRINTB(I) = DEFLTP(I)
+               DO I=1, 7
+                 PRINTB(I) = DEFLTP(I)
+               ENDDO
             END IF
             IF (ISATT.EQ.0 .OR. ISATT.EQ.1) THEN
-               DO 30  I=1, 7
-   30          STOPTB(I) = ISATT
+               DO I=1, 7
+                 STOPTB(I) = ISATT
+               ENDDO
             ELSE IF (ISATT .EQ. 2) THEN
 C                                  ASSIGN DEFAULT SETTINGS
-               DO 40  I=1, 7
-   40          STOPTB(I) = DEFLTS(I)
+               DO I=1, 7
+                 STOPTB(I) = DEFLTS(I)
+               ENDDO
             END IF
          ELSE IF (IERTYP.GE.1 .AND. IERTYP.LE.7) THEN
             IF (IPATT.EQ.0 .OR. IPATT.EQ.1) THEN
@@ -4988,8 +4995,9 @@ C                                  INITIALIZE IF NECESSARY
       ELSE
          WRITE (SAVE,'(1PD24.15)') DVALUE
       END IF
-      DO 40  I=1, 24
-   40 ARRAY(I) = SAVE(I:I)
+      DO I=1, 24
+        ARRAY(I) = SAVE(I:I)
+      ENDDO
       IBEG = I1ERIF(ARRAY,24,BLANK,1)
       IF (ID.GE.1 .AND. ID.LE.9) THEN
          ILEN = 25 - IBEG
