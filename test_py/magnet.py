@@ -20,7 +20,7 @@ def field_calc(shields, coils, wire, field):
     crad=i.get('rad',0)
     ccnt=i.get('cnt',0)
     clay=i.get('layers',0)
-    ctrn=i.get('turns',0)
+    ctrn=i.get('turns',i.get('len',0)/wire.get('th',0))
     curr=i.get('curr',0)
     sym=i.get('sym',0)
     if (curr==0) or (clen==0) or (crad==0) or\
