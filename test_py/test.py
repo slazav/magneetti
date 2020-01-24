@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import magnet
+import matplotlib.pyplot as plt
 
 ### Shields
 #  len:   length [mm], 0 for a disc, default: 0
@@ -39,16 +40,49 @@ wire = { 'th':0.12, 'foil': 0}
 ##    r1 dr r2  z1  dz z2
 
 field = {'r1':0, 'dr':0.3, 'r2':22, 'z1':-100, 'dz':1, 'z2':100}
+field1 = {'r1':0, 'dr':0.5, 'r2':5, 'z1':-90, 'dz':1, 'z2':-80}
 
 #################################
 
 # calculate the full range and plot the whole image:
 (zz, rr, Bzz, Brr) = magnet.field_calc(shields, coils, wire, field)
-magnet.plot_all(zz,rr,Bzz,Brr, shields, coils, wire, field, 'all.png')
+#magnet.plot_all(zz,rr,Bzz,Brr, shields, coils, wire, field, 'all.png')
 
 # calculate small range, fit it with linear functon, plot the fit
-field1 = {'r1':0, 'dr':0.5, 'r2':5, 'z1':-90, 'dz':1, 'z2':-80}
+#(zz, rr, Bzz, Brr) = magnet.field_calc(shields, coils, wire, field1)
+#(R0, H0, A0) = magnet.field_fit(zz, rr, Bzz, Brr, None, -85, 1);
+#magnet.plot_fit(zz,rr,Bzz,Brr, R0, H0,A0, -85, 1, 'fit.png')
+
+
+fig, axs = plt.subplots(nrows=4)
+fig.set_tight_layout(True)
+im1=magnet.plot_field(axs[0], zz, rr, Bzz)
+fig.colorbar(im1, ax=axs[0], orientation='vertical', fraction=0.015, pad=0, aspect=30, shrink=0.82)
+im2=magnet.plot_field(axs[1], zz, rr, Brr)
+fig.colorbar(im2, ax=axs[1], orientation='vertical', fraction=0.015, pad=0, aspect=30, shrink=0.82)
+axs[1].set_xlabel('z [mm]')
+
+for a in axs[0:2]:
+  a.set_ylabel('r [mm]')
+  magnet.plot_magnets(a, shields, coils[-1:], wire)
+
+axs[2].plot([zz[0], zz[-1]], [0,0], 'k-', linewidth=0.3)
+axs[2].plot([zz[0], zz[-1]], [100,100], 'k-', linewidth=0.3)
+axs[2].plot(zz, Bzz[0,:], 'r-')
+axs[2].set_ylabel('Bz(r=0) [G]')
+axs[2].set_xlabel('z [mm]')
+
+
+#######################################
+# calculate, fit and plot the central region
+
 (zz, rr, Bzz, Brr) = magnet.field_calc(shields, coils, wire, field1)
 (R0, H0, A0) = magnet.field_fit(zz, rr, Bzz, Brr, None, -85, 1);
-magnet.plot_fit(zz,rr,Bzz,Brr, R0, H0,A0, -85, 1, 'fit.png')
+
+magnet.plot_fit(axs[3], zz, rr, Bzz, R0, H0, A0, -85, 1)
+axs[3].set_xlabel('z [mm]')
+
+fig.set_size_inches(10,8)
+plt.savefig('test.png', format='png', dpi='figure')
+plt.close(fig)
 

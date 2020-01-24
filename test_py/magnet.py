@@ -120,100 +120,67 @@ def field_fit(zz, rr, Bzz, Brr, H0, z0, func):
   return(R0, H0, A0)
 
 ###################################################
-def plot_all(zz,rr,Bzz,Brr, shields, coils, wire, field, fname):
-  fig, axs = plt.subplots(nrows=3, sharex=True)
-  im = axs[0].imshow(Bzz, interpolation='bilinear', cmap=cm.seismic,
-              origin='upper', extent=[field['z1'], field['z2'], field['r1'], field['r2']],
-              vmax=abs(Bzz).max(), vmin=-abs(Bzz).max())
-  im = axs[1].imshow(Brr, interpolation='bilinear', cmap=cm.seismic,
-            origin='upper', extent=[field['z1'], field['z2'], field['r1'], field['r2']],
-            vmax=abs(Bzz).max(), vmin=-abs(Bzz).max())
-  fig.colorbar(im, ax=axs[1], orientation='horizontal', fraction=0.05, pad=0.2)
-  fig.set_tight_layout(True)
-  plt.xlabel('z [mm]')
-  plt.xlim([zz[0],zz[-1]])
-  axs[0].set_title('Bz [G]')
-  axs[1].set_title('Br [G]')
 
+def plot_field(ax, zz, rr, BB, vmin=None, vmax=None, zmin=None, zmax=None, rmin=None, rmax=None, cmap=cm.seismic):
+  if vmin==None: vmin =  -abs(BB).max()
+  if vmax==None: vmax =  +abs(BB).max()
+  if zmin==None: zmin =  zz.min()
+  if zmax==None: zmax =  zz.max()
+  if rmin==None: rmin =  rr.min()
+  if rmax==None: rmax =  rr.max()
+  return ax.imshow(BB, interpolation='bilinear', cmap=cmap,
+                 origin='upper', extent=[zmin, zmax, rmin, rmax],
+                 vmin=vmin, vmax=vmax)
+
+###################################################
+
+def plot_magnets(ax, shields, coils, wire):
   wth = wire.get('th', 0)
   fth = wire.get('foil', 0)
+  for i in coils:
+    clen=i.get('len',0)
+    crad=i.get('rad',0)
+    ccnt=i.get('cnt',0)
+    clay=i.get('layers',0)
+    sym=i.get('sym',0)
+    r1 = crad
+    r2 = crad+clay*(wth+fth)
+    for i in range(sym+1):
+      z1 = (1-2*i)*ccnt-clen/2
+      z2 = (1-2*i)*ccnt+clen/2
+      ax.plot([z1,z1,z2,z2,z1], [r1,r2,r2,r1,r1], 'g-')
 
-  for a in axs[0:2]:
-    a.set_ylabel('r [mm]')
-    for i in coils:
-      clen=i.get('len',0)
-      crad=i.get('rad',0)
-      ccnt=i.get('cnt',0)
-      clay=i.get('layers',0)
-      ctrn=i.get('turns',0)
-      curr=i.get('curr',0)
-      sym=i.get('sym',0)
-      if (curr==0) or (clen==0) or (crad==0) or\
-         (clay==0) or (ctrn==0): continue
-      r1 = crad
-      r2 = crad+clay*(wth+fth)
-      for i in range(sym+1):
-        z1 = (1-2*i)*ccnt-clen/2
-        z2 = (1-2*i)*ccnt+clen/2
-        a.plot([z1,z1,z2,z2,z1], [r1,r2,r2,r1,r1], 'g-')
+  for i in shields:
+    slen=i.get('len',0)
+    srad=i.get('rad',0)
+    shol=i.get('hole',0)
+    scnt=i.get('cnt',0)
+    sym=i.get('sym',0)
 
-    for i in shields:
-      slen=i.get('len',0)
-      srad=i.get('rad',0)
-      shol=i.get('hole',0)
-      scnt=i.get('cnt',0)
-      sym=i.get('sym',0)
-
-      for i in range(sym+1):
-        if slen==0: # disk
-          z1 = (1-2*i)*scnt
-          a.plot([z1,z1], [shol,srad], 'm-')
-        else:
-          z1 = (1-2*i)*scnt-slen/2
-          z2 = (1-2*i)*scnt+slen/2
-          a.plot([z1,z2], [srad,srad], 'm-')
-
-    axs[2].plot([zz[0], zz[-1]], [0,0], 'k-')
-    axs[2].plot(zz, Bzz[0,:], 'r-')
-    axs[2].set_ylabel('Bz(r=0) [G]')
-
-  fig.set_size_inches(12,8)
-  plt.savefig(fname, format='png', dpi='figure')
-  plt.close(fig)
-  #plt.show()
+    for i in range(sym+1):
+      if slen==0: # disk
+        z1 = (1-2*i)*scnt
+        ax.plot([z1,z1], [shol,srad], 'm-')
+      else:
+        z1 = (1-2*i)*scnt-slen/2
+        z2 = (1-2*i)*scnt+slen/2
+        ax.plot([z1,z2], [srad,srad], 'm-')
 
 ###################################################
-def plot_fit(zz,rr,Bzz,Brr, R0, H0, A0, z0, func, fname):
-  fig, ax = plt.subplots(nrows=1, sharex=True)
-  fig.set_tight_layout(True)
-  plt.xlim([zz[0],zz[-1]])
-  plt.ylabel('Bz [G]')
-  plt.xlabel('z [mm]')
+def plot_fit(ax, zz,rr, BB, R0, H0, A0, z0, func):
+  ax.set_xlim([zz[0],zz[-1]])
 
-  ax.plot([zz[0], zz[-1]], [0,0], 'k-')
+  ax.plot([zz[0],zz[-1]], [H0,H0], 'k-', linewidth=0.3)
 
-  Bzc = numpy.zeros((rr.size, zz.size)); # fit
   for ir in range(rr.size):
-    ax.plot(zz, Bzz[ir,:], 'r.-', linewidth=0.3)
+    ax.plot(zz, BB[ir,:], 'r.-', linewidth=0.3)
 
+    r = rr[ir]
+    if   func==0 : f = numpy.zeros(zz.size)
+    elif func==1 : f = (zz-z0)
+    elif func==2 : f = (zz-z0)**2 - r**2/2.0
+    elif func==4 : f = (zz-z0)**4 - 3*r**2*(zz-z0)**2 + 3.0/8*r**4
+    else: raise NameError('wrong func setting')
+    BC = H0 + A0*f
+    ax.plot(zz, BC, 'b-', linewidth=0.3)
 
-    for iz in range(zz.size):
-      z = zz[iz]-z0
-      r = rr[ir]
-
-      if   func==0 : f = 0
-      elif func==1 : f = z
-      elif func==2 : f = z**2-r**2/2.0
-      elif func==4 : f = z**4-3*r**2*z**2+3.0/8*r**4
-      else: raise NameError('wrong func setting')
-
-      Bzc[ir,iz] = H0 + A0*f
-
-    ax.plot(zz, Bzc[ir,:], 'b-', linewidth=0.3)
-
-  fig.set_size_inches(12,8)
-  plt.savefig(fname, format='png', dpi='figure')
-  plt.close(fig)
-  #plt.show()
-
-###################################################
