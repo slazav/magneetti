@@ -88,10 +88,8 @@ fi
     echo "splot [$z1:$z2] [$r1:$r2]\\"
     echo "  \"$base.fld\" using 1:2:4 with pm3d title \"Bz\""
     echo "pause -1"
-
   } || exit 1
-  echo "n" # continue same parameters
-  echo "n" # continue
+
 } > $base.plot
 
 chmod 755 $base.plot
