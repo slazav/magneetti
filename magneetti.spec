@@ -27,13 +27,10 @@ magneetti - calculate cylindrically-symmetric magnets.
 
 %install
 %makeinstall
-mkdir -p %buildroot/%python3_sitelibdir/magnet
-sed 's|../magnet_new|magnet_new|' test_py/magnet.py  > %buildroot/%python3_sitelibdir/magnet/magnet.py
-cp test_py/__init__.py %buildroot/%python3_sitelibdir/magnet/
-
 
 %files
-%_bindir/magnet_new
+%_bindir/magnet*
+%dir %python3_sitelibdir/magnet
 %python3_sitelibdir/magnet/*
 
 %changelog

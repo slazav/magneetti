@@ -8,7 +8,6 @@ extern "C"{
 
 /* New command line interface for magneetti program.
  * It implements uses the same interface as magneettiSH,
- * But now shield calculations do not work.
  *
  *       slazav, 2016.
  */

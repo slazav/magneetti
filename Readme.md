@@ -8,21 +8,28 @@ center of each disk.
 * `magnet` -- original program with Q-and-A interface
 -- Michael Boegl, EPV, Uni-Bayreuth, 1993
 
-*`magneettiUI` -- tcl/tk interface
+*`magneettiUI` -- tcl/tk interface (answer questions in GUI)
 -- Jaakko Ruohio <jaakko.ruohio@hut.fi>, 1999
 
 * `magneettiSH` -- read human-readable magnet description and produce
- answers for `magnet` program (see test/ folder)
+ answers for `magnet` program (see `example_orig/` folder)
 -- Vladislav Zavjalov <slazav@altlinux.org>, 2014
 
-* `magneetti_plot` -- make gnuplot script from human-readable magnet
-description -- Vladislav Zavjalov <slazav@altlinux.org>, 2020
-
 * `magnet_new`  --  new command-line interface similar to `magneettiSH +
-magnet` -- Vladislav Zavjalov, 2016-2020
+magnet`, see (see `example_new/` folder)
+-- Vladislav Zavjalov, 2016-2020
+
+* `magnet_plot` -- make gnuplot script from human-readable magnet
+description (see `example_new/` or `example_orig/` folder)
+ -- Vladislav Zavjalov <slazav@altlinux.org>, 2020
+
+* `magnet.py` -- python interface (see `example_py/` folder)
+
+* `magnet.mex` -- octave/matlab interface. Not finished.
 
 
-#### KNOWN PROBLEMS:
+### KNOWN PROBLEMS:
 
 - Calculation grid should not match with shield ends.
 Sometimes calculation just stops there.
+

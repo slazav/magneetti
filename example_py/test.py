@@ -2,6 +2,10 @@
 
 import magnet
 import matplotlib.pyplot as plt
+import os
+
+# find magnet program
+os.environ["PATH"] += os.pathsep + ".."
 
 ### Shields
 #  len:   length [mm], 0 for a disc, default: 0

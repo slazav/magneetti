@@ -1,10 +1,10 @@
-#!/usr/bin/python3
-
 import subprocess
 import numpy
 import math
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+
+magnet_prog = 'magnet_new';
 
 ###################################################
 ### Calculate magnetic field profile for he coil system
@@ -38,7 +38,7 @@ def field_calc(shields, coils, wire, field):
   inp += 'field %f %f %f %f %f %f\n' % (r1,dr,r2,z1,dz,z2)
 
   # print(inp) # `inp` contains magnet description for magnet_new/magnetSH programs
-  proc = subprocess.Popen('../magnet_new', stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+  proc = subprocess.Popen(magnet_prog, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
   try:
     outs, errs = proc.communicate(timeout=15, input=inp.encode())
   except subprocess.TimeoutExpired:

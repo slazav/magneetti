@@ -1,3 +1,8 @@
+prefix     ?= /usr
+bindir     ?= ${prefix}/bin
+libdir     ?= ${prefix}/lib
+python3_sitelibdir ?= ${libdir}/python3/site-packages
+
 #  -g -fbacktrace -ffpe-trap=invalid,zero,overflow,underflow,denormal\
 FFLAGS= -g -Wconversion\
   -ffpe-summary=none\
@@ -7,13 +12,13 @@ FFLAGS= -g -Wconversion\
   -Wno-unused-parameter -fPIC -fno-range-check -O\
   -std=legacy
 
-all: magnet magnet_new libmagneetti.so
+all: magnet magnet_new libmagnet.so
 
 # original magnet program
 magnet: magnet.f magnet_lib.f magnnum.f
 
 # library
-libmagneetti.so: magnet_lib.f magnnum.f
+libmagnet.so: magnet_lib.f magnnum.f
 	$(FC) $(LDFLAGS) --shared -fPIC -o $@ $+  $(LDLIBS)
 
 # new interface
@@ -22,14 +27,17 @@ magnet_new: magnet_new.o magnet_lib.o magnnum.o
 	g++ -O9 -o magnet_new $+ -lgfortran
 
 # octave interface
-octave: libmagneetti.so
+octave: libmagnet.so
 	rm -f *.mex
 	octave-cli -q --eval 'build_mex'
 
 clean:
-	rm -f magnet magnet_new libmagneetti.so *.o
-
+	rm -f magnet magnet_new *.so *.o *.mex
+	make -C example_new  clean
+	make -C example_orig clean
+	make -C example_py   clean
 
 install: all
-	mkdir -p ${bindir}
-	install -m755 magnet_new ${bindir}
+	install -D -m755 magnet_new magnet_plot -t ${bindir}/
+	install -D -m644 magnet.py  -t ${python3_sitelibdir}/magnet/
+	echo "from .magnet import *" > ${python3_sitelibdir}/magnet/__init__.py

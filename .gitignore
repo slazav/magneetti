@@ -2,3 +2,9 @@ magnet
 magnet_new
 *.so
 *.o
+*.fld
+*.cmd
+*.dsc
+*.plot
+*.mex
+*.png
