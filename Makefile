@@ -7,26 +7,27 @@ FFLAGS= -g -Wconversion\
   -Wno-unused-parameter -fPIC -fno-range-check -O\
   -std=legacy
 
-
 all: magnet magnet_new libmagneetti.so
 
+# original magnet program
 magnet: magnet.f magnet_lib.f magnnum.f
 
+# library
+libmagneetti.so: magnet_lib.f magnnum.f
+	$(FC) $(LDFLAGS) --shared -fPIC -o $@ $+  $(LDLIBS)
+
+# new interface
 magnet_new.o: magnet.h magnet_new.cpp
 magnet_new: magnet_new.o magnet_lib.o magnnum.o
 	g++ -O9 -o magnet_new $+ -lgfortran
 
-
-libmagneetti.so: magnet_lib.f magnnum.f
-	$(FC) $(LDFLAGS) --shared -fPIC -o $@ $+  $(LDLIBS)
-
+# octave interface
 octave: libmagneetti.so
 	rm -f *.mex
 	octave-cli -q --eval 'build_mex'
 
 clean:
 	rm -f magnet magnet_new libmagneetti.so *.o
-
 
 
 install: all
