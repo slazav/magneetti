@@ -24,7 +24,7 @@ all: test.plot test.fld
 	../magnet < test.cmd > /dev/null
 
 %.plot: %.txt
-	../magneetti_plot test.txt
+	../magnet_plot test.txt
 
 clean:
 	rm -f *.bak *.cmd *.fld *.dsc *.plot

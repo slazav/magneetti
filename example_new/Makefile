@@ -10,7 +10,7 @@ all: test.plot test.fld
 	../magnet_new < test.txt > test.fld
 
 %.plot: %.txt
-	../magneetti_plot test.txt
+	../magnet_plot test.txt
 
 clean:
 	rm -f *.bak *.fld *.plot
